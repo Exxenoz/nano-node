@@ -312,7 +312,6 @@ bool nano::mdb_store::do_upgrades (nano::write_transaction & transaction_a, bool
 		case 21:
 			upgrade_v21_to_v22 (transaction_a);
 			[[fallthrough]];
-			break;
 		case 22:
 			break;
 		default:
