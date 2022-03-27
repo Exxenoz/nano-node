@@ -135,6 +135,21 @@ nano::node::node (boost::asio::io_context & io_ctx_a, boost::filesystem::path co
 	};
 	if (!init_error ())
 	{
+		if (config.enable_reverse_links)
+		{
+			if (store.reverse_link.begin (store.tx_begin_read ()) == store.reverse_link.end ())
+			{
+				create_reverse_links ();
+			}
+		}
+		else
+		{
+			if (store.reverse_link.begin (store.tx_begin_read ()) != store.reverse_link.end ())
+			{
+				store.reverse_link.clear (store.tx_begin_write ({ tables::reverse_links }));
+			}
+		}
+
 		telemetry->start ();
 
 		active.vacancy_update = [this] () { scheduler.notify (); };
@@ -773,6 +788,44 @@ nano::uint128_t nano::node::minimum_principal_weight ()
 nano::uint128_t nano::node::minimum_principal_weight (nano::uint128_t const & online_stake)
 {
 	return online_stake / network_params.network.principal_weight_factor;
+}
+
+void nano::node::create_reverse_links ()
+{
+	logger.always_log ("Start creating reverse links...");
+	auto transaction (store.tx_begin_write ());
+	auto blocks_count (store.block.count (transaction));
+	auto blocks_processed = 0u;
+	for (auto i = store.block.begin (transaction), n = store.block.end (); i != n && !stopped.load (); ++i, ++blocks_processed)
+	{
+		// Every so often output to the log to indicate progress
+		constexpr auto output_cutoff = 1000000;
+		if (blocks_processed > 0 && blocks_processed % output_cutoff == 0)
+		{
+			logger.always_log (boost::str (boost::format ("Create reverse links: %1% million blocks processed (out of %2%)") % (blocks_processed / output_cutoff) % blocks_count));
+		}
+		nano::block_hash const & block_hash = i->first;
+		nano::block_w_sideband const & block_w_sideband = i->second;
+		nano::block const & block = *block_w_sideband.block;
+		if (!ledger.block_confirmed (transaction, block_hash))
+		{
+			continue;
+		}
+		nano::block_hash source = ledger.block_source (transaction, block);
+		if (!source.is_zero ())
+		{
+			store.reverse_link.put (transaction, source, block_hash);
+		}
+	}
+	if (blocks_processed >= blocks_count)
+	{
+		logger.always_log ("Finished creating reverse links");
+	}
+	else
+	{
+		logger.always_log ("Stopped creating reverse links");
+		store.reverse_link.clear (transaction);
+	}
 }
 
 void nano::node::long_inactivity_cleanup ()

@@ -13,6 +13,7 @@
 #include <nano/secure/store/peer_store_partial.hpp>
 #include <nano/secure/store/pending_store_partial.hpp>
 #include <nano/secure/store/pruned_store_partial.hpp>
+#include <nano/secure/store/reverse_link_store_partial.hpp>
 #include <nano/secure/store/unchecked_store_partial.hpp>
 #include <nano/secure/store/version_store_partial.hpp>
 #include <nano/secure/store_partial.hpp>
@@ -66,6 +67,7 @@ private:
 	nano::peer_store_partial<rocksdb::Slice, rocksdb_store> peer_store_partial;
 	nano::confirmation_height_store_partial<rocksdb::Slice, rocksdb_store> confirmation_height_store_partial;
 	nano::final_vote_store_partial<rocksdb::Slice, rocksdb_store> final_vote_store_partial;
+	nano::reverse_link_store_partial<rocksdb::Slice, rocksdb_store> reverse_link_store_partial;
 	nano::version_rocksdb_store version_rocksdb_store;
 
 public:

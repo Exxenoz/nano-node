@@ -54,6 +54,7 @@ nano::mdb_store::mdb_store (nano::logger_mt & logger_a, boost::filesystem::path 
 		peer_store_partial,
 		confirmation_height_store_partial,
 		final_vote_store_partial,
+		reverse_link_store_partial,
 		version_store_partial
 	},
 	// clang-format on
@@ -66,6 +67,7 @@ nano::mdb_store::mdb_store (nano::logger_mt & logger_a, boost::filesystem::path 
 	peer_store_partial{ *this },
 	confirmation_height_store_partial{ *this },
 	final_vote_store_partial{ *this },
+	reverse_link_store_partial{ *this },
 	unchecked_mdb_store{ *this },
 	version_store_partial{ *this },
 	logger (logger_a),
@@ -223,6 +225,7 @@ void nano::mdb_store::open_databases (bool & error_a, nano::transaction const & 
 	error_a |= mdb_dbi_open (env.tx (transaction_a), "pending", flags, &pending_v0_handle) != 0;
 	pending_handle = pending_v0_handle;
 	error_a |= mdb_dbi_open (env.tx (transaction_a), "final_votes", flags, &final_votes_handle) != 0;
+	error_a |= mdb_dbi_open (env.tx (transaction_a), "reverse_links", flags, &reverse_links_handle) != 0;
 
 	auto version_l = version.get (transaction_a);
 	if (version_l < 19)
@@ -307,6 +310,10 @@ bool nano::mdb_store::do_upgrades (nano::write_transaction & transaction_a, bool
 			upgrade_v20_to_v21 (transaction_a);
 			[[fallthrough]];
 		case 21:
+			upgrade_v21_to_v22 (transaction_a);
+			[[fallthrough]];
+			break;
+		case 22:
 			break;
 		default:
 			logger.always_log (boost::str (boost::format ("The version of the ledger (%1%) is too high for this node") % version_l));
@@ -780,6 +787,14 @@ void nano::mdb_store::upgrade_v20_to_v21 (nano::write_transaction const & transa
 	logger.always_log ("Finished creating new final_vote table");
 }
 
+void nano::mdb_store::upgrade_v21_to_v22 (nano::write_transaction const & transaction_a)
+{
+	logger.always_log ("Preparing v21 to v22 database upgrade...");
+	mdb_dbi_open (env.tx (transaction_a), "reverse_links", MDB_CREATE, &reverse_links_handle);
+	version.put (transaction_a, 22);
+	logger.always_log ("Finished creating new reverse_links table");
+}
+
 /** Takes a filepath, appends '_backup_<timestamp>' to the end (but before any extension) and saves that file in the same directory */
 void nano::mdb_store::create_backup_file (nano::mdb_env & env_a, boost::filesystem::path const & filepath_a, nano::logger_mt & logger_a)
 {
@@ -886,6 +901,8 @@ MDB_dbi nano::mdb_store::table_to_dbi (tables table_a) const
 			return confirmation_height_handle;
 		case tables::final_votes:
 			return final_votes_handle;
+		case tables::reverse_links:
+			return reverse_links_handle;
 		default:
 			release_assert (false);
 			return peers_handle;
