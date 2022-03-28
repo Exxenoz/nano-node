@@ -967,6 +967,91 @@ TEST (active_transactions, confirmation_consistency)
 }
 }
 
+/**
+ * This test case tests the creation of reverse links for incoming confirmed blocks.
+ */
+TEST (active_transactions, reverse_link)
+{
+	// Initialise node environment and enable reverse links
+	nano::system system;
+	nano::node_config node_config = nano::node_config (nano::get_available_port (), system.logging);
+	node_config.enable_reverse_links = true;
+	auto & node = *system.add_node (node_config);
+
+	// Generate a random key pair
+	nano::keypair key;
+	// Create two blocks
+	nano::state_block_builder builder;
+	auto send1 = builder.make_block ()
+				.account (nano::dev::genesis_key.pub)
+				.previous (nano::dev::genesis->hash ())
+				.representative (nano::dev::genesis_key.pub)
+				.balance (nano::dev::constants.genesis_amount - 1)
+				.link (key.pub)
+				.sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
+				.work (*system.work.generate (nano::dev::genesis->hash ()))
+				.build_shared ();
+	auto open1 = builder.make_block ()
+				.account (key.pub)
+				.previous (0)
+				.representative (key.pub)
+				.balance (1)
+				.link (send1->hash ())
+				.sign (key.prv, key.pub)
+				.work (*system.work.generate (key.pub))
+				.build_shared ();
+	// Process and confirm both blocks
+	node.process_active (send1);
+	node.process_active (open1);
+	auto vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send1->hash (), open1->hash () });
+	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
+	node.block_processor.flush ();
+	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 3);
+	// Check if reverse link was created
+	{
+		auto transaction = node.store.tx_begin_read ();
+		ASSERT_EQ (1, node.store.reverse_link.count (transaction));
+		ASSERT_EQ (open1->hash (), node.store.reverse_link.get (transaction, send1->hash ()));
+	}
+
+	// Now disable reverse links
+	node.config.enable_reverse_links = false;
+	// Generate another random key pair
+	nano::keypair key2;
+	// Create two more blocks
+	auto send2 = builder.make_block ()
+				.account (nano::dev::genesis_key.pub)
+				.previous (send1->hash ())
+				.representative (nano::dev::genesis_key.pub)
+				.balance (nano::dev::constants.genesis_amount - 2)
+				.link (key2.pub)
+				.sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
+				.work (*system.work.generate (nano::dev::genesis->hash ()))
+				.build_shared ();
+	auto open2 = builder.make_block ()
+				.account (key2.pub)
+				.previous (0)
+				.representative (key2.pub)
+				.balance (1)
+				.link (send2->hash ())
+				.sign (key2.prv, key2.pub)
+				.work (*system.work.generate (key2.pub))
+				.build_shared ();
+	// Process and confirm both blocks
+	node.process_active (send2);
+	node.process_active (open2);
+	vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send2->hash (), open2->hash () });
+	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
+	node.block_processor.flush ();
+	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 5);
+	// Reverse link should not be created this time
+	{
+		auto transaction = node.store.tx_begin_read ();
+		ASSERT_EQ (1, node.store.reverse_link.count (transaction));
+		ASSERT_EQ (nano::block_hash (0), node.store.reverse_link.get (transaction, send2->hash ()));
+	}
+}
+
 // Test disabled because it's failing intermittently.
 // PR in which it got disabled: https://github.com/nanocurrency/nano-node/pull/3629
 // Issue for investigating it: https://github.com/nanocurrency/nano-node/issues/3634
