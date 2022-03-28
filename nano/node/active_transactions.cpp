@@ -163,6 +163,7 @@ void nano::active_transactions::confirm_prioritized_frontiers (nano::transaction
 
 void nano::active_transactions::block_cemented_callback (std::shared_ptr<nano::block> const & block_a)
 {
+	if (node.config.enable_reverse_links)
 	{
 		auto transaction = node.store.tx_begin_write ({ tables::reverse_links });
 		nano::block_hash source = node.ledger.block_source (transaction, *block_a);
