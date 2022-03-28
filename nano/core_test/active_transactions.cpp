@@ -1005,7 +1005,6 @@ TEST (active_transactions, reverse_link)
 	node.process_active (open1);
 	auto vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send1->hash (), open1->hash () });
 	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
-	node.block_processor.flush ();
 	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 3);
 	// Check if reverse link was created
 	{
@@ -1042,7 +1041,6 @@ TEST (active_transactions, reverse_link)
 	node.process_active (open2);
 	vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send2->hash (), open2->hash () });
 	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
-	node.block_processor.flush ();
 	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 5);
 	// Reverse link should not be created this time
 	{
