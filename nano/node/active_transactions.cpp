@@ -168,7 +168,7 @@ void nano::active_transactions::block_cemented_callback (std::shared_ptr<nano::b
 		nano::block_hash source = node.ledger.block_source (transaction, *block_a);
 		if (!source.is_zero ())
 		{
-			node.store.reverse_link.put (transaction, block_a->hash (), source);
+			node.store.reverse_link.put (transaction, source, block_a->hash ());
 		}
 	}
 
