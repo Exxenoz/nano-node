@@ -983,23 +983,23 @@ TEST (active_transactions, reverse_link)
 	// Create two blocks
 	nano::state_block_builder builder;
 	auto send1 = builder.make_block ()
-				.account (nano::dev::genesis_key.pub)
-				.previous (nano::dev::genesis->hash ())
-				.representative (nano::dev::genesis_key.pub)
-				.balance (nano::dev::constants.genesis_amount - 1)
-				.link (key.pub)
-				.sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
-				.work (*system.work.generate (nano::dev::genesis->hash ()))
-				.build_shared ();
+				 .account (nano::dev::genesis_key.pub)
+				 .previous (nano::dev::genesis->hash ())
+				 .representative (nano::dev::genesis_key.pub)
+				 .balance (nano::dev::constants.genesis_amount - 1)
+				 .link (key.pub)
+				 .sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
+				 .work (*system.work.generate (nano::dev::genesis->hash ()))
+				 .build_shared ();
 	auto open1 = builder.make_block ()
-				.account (key.pub)
-				.previous (0)
-				.representative (key.pub)
-				.balance (1)
-				.link (send1->hash ())
-				.sign (key.prv, key.pub)
-				.work (*system.work.generate (key.pub))
-				.build_shared ();
+				 .account (key.pub)
+				 .previous (0)
+				 .representative (key.pub)
+				 .balance (1)
+				 .link (send1->hash ())
+				 .sign (key.prv, key.pub)
+				 .work (*system.work.generate (key.pub))
+				 .build_shared ();
 	// Process and confirm both blocks
 	node.process_active (send1);
 	node.process_active (open1);
@@ -1020,23 +1020,23 @@ TEST (active_transactions, reverse_link)
 	nano::keypair key2;
 	// Create two more blocks
 	auto send2 = builder.make_block ()
-				.account (nano::dev::genesis_key.pub)
-				.previous (send1->hash ())
-				.representative (nano::dev::genesis_key.pub)
-				.balance (nano::dev::constants.genesis_amount - 2)
-				.link (key2.pub)
-				.sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
-				.work (*system.work.generate (send1->hash ()))
-				.build_shared ();
+				 .account (nano::dev::genesis_key.pub)
+				 .previous (send1->hash ())
+				 .representative (nano::dev::genesis_key.pub)
+				 .balance (nano::dev::constants.genesis_amount - 2)
+				 .link (key2.pub)
+				 .sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
+				 .work (*system.work.generate (send1->hash ()))
+				 .build_shared ();
 	auto open2 = builder.make_block ()
-				.account (key2.pub)
-				.previous (0)
-				.representative (key2.pub)
-				.balance (1)
-				.link (send2->hash ())
-				.sign (key2.prv, key2.pub)
-				.work (*system.work.generate (key2.pub))
-				.build_shared ();
+				 .account (key2.pub)
+				 .previous (0)
+				 .representative (key2.pub)
+				 .balance (1)
+				 .link (send2->hash ())
+				 .sign (key2.prv, key2.pub)
+				 .work (*system.work.generate (key2.pub))
+				 .build_shared ();
 	// Process and confirm both blocks
 	node.process_active (send2);
 	node.process_active (open2);

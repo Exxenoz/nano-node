@@ -3644,7 +3644,7 @@ void nano::json_handler::reverse_links ()
 		}
 
 		nano::block_hash receive_hash = node.store.reverse_link.get (transaction, hash);
-		if (!receive_hash.is_zero() || include_not_found)
+		if (!receive_hash.is_zero () || include_not_found)
 		{
 			reverse_links.put (hash.to_string (), receive_hash.to_string ());
 		}
