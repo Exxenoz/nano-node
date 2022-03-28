@@ -139,7 +139,7 @@ public:
 
 protected:
 	nano::ledger_constants & constants;
-	int const version_number{ 22 };
+	int const version_number{ 21 };
 
 	template <typename Key, typename Value>
 	nano::store_iterator<Key, Value> make_iterator (nano::transaction const & transaction_a, tables table_a, bool const direction_asc = true) const

@@ -310,9 +310,6 @@ bool nano::mdb_store::do_upgrades (nano::write_transaction & transaction_a, bool
 			upgrade_v20_to_v21 (transaction_a);
 			[[fallthrough]];
 		case 21:
-			upgrade_v21_to_v22 (transaction_a);
-			[[fallthrough]];
-		case 22:
 			break;
 		default:
 			logger.always_log (boost::str (boost::format ("The version of the ledger (%1%) is too high for this node") % version_l));
@@ -784,14 +781,6 @@ void nano::mdb_store::upgrade_v20_to_v21 (nano::write_transaction const & transa
 	mdb_dbi_open (env.tx (transaction_a), "final_votes", MDB_CREATE, &final_votes_handle);
 	version.put (transaction_a, 21);
 	logger.always_log ("Finished creating new final_vote table");
-}
-
-void nano::mdb_store::upgrade_v21_to_v22 (nano::write_transaction const & transaction_a)
-{
-	logger.always_log ("Preparing v21 to v22 database upgrade...");
-	mdb_dbi_open (env.tx (transaction_a), "reverse_links", MDB_CREATE, &reverse_links_handle);
-	version.put (transaction_a, 22);
-	logger.always_log ("Finished creating new reverse_links table");
 }
 
 /** Takes a filepath, appends '_backup_<timestamp>' to the end (but before any extension) and saves that file in the same directory */

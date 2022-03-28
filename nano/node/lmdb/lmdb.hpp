@@ -277,7 +277,6 @@ private:
 	void upgrade_v18_to_v19 (nano::write_transaction const &);
 	void upgrade_v19_to_v20 (nano::write_transaction const &);
 	void upgrade_v20_to_v21 (nano::write_transaction const &);
-	void upgrade_v21_to_v22 (nano::write_transaction const &);
 
 	std::shared_ptr<nano::block> block_get_v18 (nano::transaction const & transaction_a, nano::block_hash const & hash_a) const;
 	nano::mdb_val block_raw_get_v18 (nano::transaction const & transaction_a, nano::block_hash const & hash_a, nano::block_type & type_a) const;
