@@ -1026,7 +1026,7 @@ TEST (active_transactions, reverse_link)
 				.balance (nano::dev::constants.genesis_amount - 2)
 				.link (key2.pub)
 				.sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
-				.work (*system.work.generate (nano::dev::genesis->hash ()))
+				.work (*system.work.generate (send1->hash ()))
 				.build_shared ();
 	auto open2 = builder.make_block ()
 				.account (key2.pub)
