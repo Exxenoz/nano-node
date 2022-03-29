@@ -987,8 +987,8 @@ TEST (active_transactions, reverse_link)
 	auto const open1 = system.wallet (0)->receive_action (send1->hash (), key1.pub, node.config.receive_minimum.number (), send1->link ().as_account ());
 	ASSERT_NE (open1, nullptr);
 
-	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), send1->account ()) == 2);
-	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), open1->account ()) == 1);
+	ASSERT_TIMELY (5s, node.block_confirmed (send1->hash ()));
+	ASSERT_TIMELY (5s, node.block_confirmed (open1->hash ()));
 
 	// Check if reverse link was created
 	ASSERT_EQ (1, node.store.reverse_link.count_accurate (node.store.tx_begin_read ()));
@@ -1006,8 +1006,8 @@ TEST (active_transactions, reverse_link)
 	auto const open2 = system.wallet (0)->receive_action (send2->hash (), key2.pub, node.config.receive_minimum.number (), send2->link ().as_account ());
 	ASSERT_NE (open2, nullptr);
 
-	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), send2->account ()) == 3);
-	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), open2->account ()) == 1);
+	ASSERT_TIMELY (5s, node.block_confirmed (send2->hash ()));
+	ASSERT_TIMELY (5s, node.block_confirmed (open2->hash ()));
 
 	// The second reverse link should not be created this time
 	ASSERT_EQ (1, node.store.reverse_link.count_accurate (node.store.tx_begin_read ()));
