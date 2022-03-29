@@ -1323,6 +1323,13 @@ std::shared_ptr<nano::block> nano::ledger::forked_block (nano::transaction const
 	return result;
 }
 
+uint64_t nano::ledger::get_confirmation_height (nano::transaction const & transaction_a, nano::account const & account_a) const
+{
+	nano::confirmation_height_info confirmation_height_info;
+	store.confirmation_height.get (transaction_a, account_a, confirmation_height_info);
+	return confirmation_height_info.height;
+}
+
 bool nano::ledger::block_confirmed (nano::transaction const & transaction_a, nano::block_hash const & hash_a) const
 {
 	if (store.pruned.exists (transaction_a, hash_a))
@@ -1330,14 +1337,11 @@ bool nano::ledger::block_confirmed (nano::transaction const & transaction_a, nan
 		return true;
 	}
 	auto block = store.block.get (transaction_a, hash_a);
-	if (block)
+	if (block == nullptr)
 	{
-		nano::confirmation_height_info confirmation_height_info;
-		store.confirmation_height.get (transaction_a, block->account ().is_zero () ? block->sideband ().account : block->account (), confirmation_height_info);
-		auto confirmed (confirmation_height_info.height >= block->sideband ().height);
-		return confirmed;
+		return false;
 	}
-	return false;
+	return get_confirmation_height (transaction_a, block->account ().is_zero () ? block->sideband ().account : block->account ()) >= block->sideband ().height;
 }
 
 uint64_t nano::ledger::pruning_action (nano::write_transaction & transaction_a, nano::block_hash const & hash_a, uint64_t const batch_size_a)
