@@ -1970,24 +1970,29 @@ TEST (block_store, reverse_link)
 	ASSERT_TRUE (!store->init_error ());
 
 	// Insert some reverse links and check if count got increased
-	auto transaction (store->tx_begin_write ());
-	store->reverse_link.put (transaction, nano::block_hash (100), nano::block_hash (1));
-	ASSERT_EQ (store->reverse_link.count (transaction), 1);
-	store->reverse_link.put (transaction, nano::block_hash (200), nano::block_hash (2));
-	ASSERT_EQ (store->reverse_link.count (transaction), 2);
-	store->reverse_link.put (transaction, nano::block_hash (300), nano::block_hash (3));
-	ASSERT_EQ (store->reverse_link.count (transaction), 3);
+	{
+		auto transaction = store->tx_begin_write ();
+		store->reverse_link.put (transaction, nano::block_hash (100), nano::block_hash (1));
+		ASSERT_EQ (store->reverse_link.count_accurate (transaction), 1);
+		store->reverse_link.put (transaction, nano::block_hash (200), nano::block_hash (2));
+		ASSERT_EQ (store->reverse_link.count_accurate (transaction), 2);
+		store->reverse_link.put (transaction, nano::block_hash (300), nano::block_hash (3));
+		ASSERT_EQ (store->reverse_link.count_accurate (transaction), 3);
+	}
 
 	// Request recently added reverse links and check if results are matching
-	ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (300)), nano::block_hash (3));
-	ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (200)), nano::block_hash (2));
-	ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (100)), nano::block_hash (1));
-	// Request a not existing reverse link and check if the result is a zero block hash
-	ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (400)), nano::block_hash (0));
+	{
+		auto transaction = store->tx_begin_read ();
+		ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (300)), nano::block_hash (3));
+		ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (200)), nano::block_hash (2));
+		ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (100)), nano::block_hash (1));
+		// Request a not existing reverse link and check if the result is a zero block hash
+		ASSERT_EQ (store->reverse_link.get (transaction, nano::block_hash (400)), nano::block_hash (0));
+	}
 
 	// Remove all reverse links and check if count equals zero
-	store->reverse_link.clear (transaction);
-	ASSERT_EQ (store->reverse_link.count (transaction), 0);
+	store->reverse_link.clear (store->tx_begin_write ());
+	ASSERT_EQ (store->reverse_link.count_accurate (store->tx_begin_read ()), 0);
 }
 
 // Ledger versions are not forward compatible

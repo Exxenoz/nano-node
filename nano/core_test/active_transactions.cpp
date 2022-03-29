@@ -978,76 +978,40 @@ TEST (active_transactions, reverse_link)
 	node_config.enable_reverse_links = true;
 	auto & node = *system.add_node (node_config);
 
-	// Generate a random key pair
-	nano::keypair key;
-	// Create two blocks
-	nano::state_block_builder builder;
-	auto send1 = builder.make_block ()
-				 .account (nano::dev::genesis_key.pub)
-				 .previous (nano::dev::genesis->hash ())
-				 .representative (nano::dev::genesis_key.pub)
-				 .balance (nano::dev::constants.genesis_amount - 1)
-				 .link (key.pub)
-				 .sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
-				 .work (*system.work.generate (nano::dev::genesis->hash ()))
-				 .build_shared ();
-	auto open1 = builder.make_block ()
-				 .account (key.pub)
-				 .previous (0)
-				 .representative (key.pub)
-				 .balance (1)
-				 .link (send1->hash ())
-				 .sign (key.prv, key.pub)
-				 .work (*system.work.generate (key.pub))
-				 .build_shared ();
-	// Process and confirm both blocks
-	node.process_active (send1);
-	node.process_active (open1);
-	auto vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send1->hash (), open1->hash () });
-	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
-	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 3);
+	// Create and process two blocks
+	nano::keypair key1;
+	system.wallet (0)->insert_adhoc (nano::dev::genesis_key.prv);
+	auto const send1 = system.wallet (0)->send_action (nano::dev::genesis_key.pub, key1.pub, node.config.receive_minimum.number ());
+	ASSERT_NE (send1, nullptr);
+	system.wallet (0)->insert_adhoc (key1.prv);
+	auto const open1 = system.wallet (0)->receive_action (send1->hash (), key1.pub, node.config.receive_minimum.number (), send1->link ().as_account ());
+	ASSERT_NE (open1, nullptr);
+
+	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), send1->account ()) == 2);
+	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), open1->account ()) == 1);
+
 	// Check if reverse link was created
-	{
-		auto transaction = node.store.tx_begin_read ();
-		ASSERT_EQ (1, node.store.reverse_link.count (transaction));
-		ASSERT_EQ (open1->hash (), node.store.reverse_link.get (transaction, send1->hash ()));
-	}
+	ASSERT_EQ (1, node.store.reverse_link.count_accurate (node.store.tx_begin_read ()));
+	ASSERT_EQ (open1->hash (), node.store.reverse_link.get (node.store.tx_begin_read (), send1->hash ()));
 
 	// Now disable reverse links
 	node.config.enable_reverse_links = false;
-	// Generate another random key pair
+
+	// Create and process two more blocks
 	nano::keypair key2;
-	// Create two more blocks
-	auto send2 = builder.make_block ()
-				 .account (nano::dev::genesis_key.pub)
-				 .previous (send1->hash ())
-				 .representative (nano::dev::genesis_key.pub)
-				 .balance (nano::dev::constants.genesis_amount - 2)
-				 .link (key2.pub)
-				 .sign (nano::dev::genesis_key.prv, nano::dev::genesis_key.pub)
-				 .work (*system.work.generate (send1->hash ()))
-				 .build_shared ();
-	auto open2 = builder.make_block ()
-				 .account (key2.pub)
-				 .previous (0)
-				 .representative (key2.pub)
-				 .balance (1)
-				 .link (send2->hash ())
-				 .sign (key2.prv, key2.pub)
-				 .work (*system.work.generate (key2.pub))
-				 .build_shared ();
-	// Process and confirm both blocks
-	node.process_active (send2);
-	node.process_active (open2);
-	vote = std::make_shared<nano::vote> (nano::dev::genesis_key.pub, nano::dev::genesis_key.prv, nano::vote::timestamp_max, nano::vote::duration_max, std::vector<nano::block_hash>{ send2->hash (), open2->hash () });
-	node.vote_processor.vote (vote, std::make_shared<nano::transport::channel_loopback> (node));
-	ASSERT_TIMELY (5s, node.ledger.cache.cemented_count == 5);
-	// Reverse link should not be created this time
-	{
-		auto transaction = node.store.tx_begin_read ();
-		ASSERT_EQ (1, node.store.reverse_link.count (transaction));
-		ASSERT_EQ (nano::block_hash (0), node.store.reverse_link.get (transaction, send2->hash ()));
-	}
+	system.wallet (0)->insert_adhoc (nano::dev::genesis_key.prv);
+	auto const send2 = system.wallet (0)->send_action (nano::dev::genesis_key.pub, key2.pub, node.config.receive_minimum.number ());
+	ASSERT_NE (send2, nullptr);
+	system.wallet (0)->insert_adhoc (key2.prv);
+	auto const open2 = system.wallet (0)->receive_action (send2->hash (), key2.pub, node.config.receive_minimum.number (), send2->link ().as_account ());
+	ASSERT_NE (open2, nullptr);
+
+	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), send2->account ()) == 3);
+	ASSERT_TIMELY (5s, node.ledger.get_confirmation_height (node.store.tx_begin_read (), open2->account ()) == 1);
+
+	// The second reverse link should not be created this time
+	ASSERT_EQ (1, node.store.reverse_link.count_accurate (node.store.tx_begin_read ()));
+	ASSERT_EQ (nano::block_hash (0), node.store.reverse_link.get (node.store.tx_begin_read (), send2->hash ()));
 }
 
 // Test disabled because it's failing intermittently.
