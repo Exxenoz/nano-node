@@ -15,6 +15,7 @@
 #include <nano/secure/store/peer_store_partial.hpp>
 #include <nano/secure/store/pending_store_partial.hpp>
 #include <nano/secure/store/pruned_store_partial.hpp>
+#include <nano/secure/store/reverse_link_store_partial.hpp>
 #include <nano/secure/store/unchecked_store_partial.hpp>
 #include <nano/secure/store/version_store_partial.hpp>
 
@@ -67,6 +68,7 @@ class store_partial : public store
 	friend class nano::peer_store_partial<Val, Derived_Store>;
 	friend class nano::confirmation_height_store_partial<Val, Derived_Store>;
 	friend class nano::final_vote_store_partial<Val, Derived_Store>;
+	friend class nano::reverse_link_store_partial<Val, Derived_Store>;
 	friend class nano::version_store_partial<Val, Derived_Store>;
 
 public:
@@ -83,6 +85,7 @@ public:
 		nano::peer_store_partial<Val, Derived_Store> & peer_store_partial_a,
 		nano::confirmation_height_store_partial<Val, Derived_Store> & confirmation_height_store_partial_a,
 		nano::final_vote_store_partial<Val, Derived_Store> & final_vote_store_partial_a,
+		nano::reverse_link_store_partial<Val, Derived_Store> & reverse_link_store_partial_a,
 		nano::version_store_partial<Val, Derived_Store> & version_store_partial_a) :
 		constants{ constants },
 		store{
@@ -96,6 +99,7 @@ public:
 			peer_store_partial_a,
 			confirmation_height_store_partial_a,
 			final_vote_store_partial_a,
+			reverse_link_store_partial_a,
 			version_store_partial_a
 		}
 	{}

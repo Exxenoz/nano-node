@@ -17,6 +17,7 @@
 #include <nano/secure/store/peer_store_partial.hpp>
 #include <nano/secure/store/pending_store_partial.hpp>
 #include <nano/secure/store/pruned_store_partial.hpp>
+#include <nano/secure/store/reverse_link_store_partial.hpp>
 #include <nano/secure/store/unchecked_store_partial.hpp>
 #include <nano/secure/store/version_store_partial.hpp>
 #include <nano/secure/store_partial.hpp>
@@ -63,6 +64,7 @@ private:
 	nano::peer_store_partial<MDB_val, mdb_store> peer_store_partial;
 	nano::confirmation_height_store_partial<MDB_val, mdb_store> confirmation_height_store_partial;
 	nano::final_vote_store_partial<MDB_val, mdb_store> final_vote_store_partial;
+	nano::reverse_link_store_partial<MDB_val, mdb_store> reverse_link_store_partial;
 	nano::version_store_partial<MDB_val, mdb_store> version_store_partial;
 
 	friend class nano::unchecked_mdb_store;
@@ -226,6 +228,12 @@ public:
 	 * nano::qualified_root -> nano::block_hash
 	 */
 	MDB_dbi final_votes_handle{ 0 };
+
+	/**
+	 * Maps a send block hash to its corresponding receive block hash
+	 * nano::block_hash -> nano::block_hash
+	 */
+	MDB_dbi reverse_links_handle{ 0 };
 
 	bool exists (nano::transaction const & transaction_a, tables table_a, nano::mdb_val const & key_a) const;
 

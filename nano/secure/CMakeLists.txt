@@ -64,6 +64,7 @@ add_library(
   store/confirmation_height_store_partial.hpp
   store/unchecked_store_partial.hpp
   store/final_vote_store_partial.hpp
+  store/reverse_link_store_partial.hpp
   store/version_store_partial.hpp)
 
 target_link_libraries(

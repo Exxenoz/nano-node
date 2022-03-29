@@ -54,6 +54,7 @@ nano::mdb_store::mdb_store (nano::logger_mt & logger_a, boost::filesystem::path 
 		peer_store_partial,
 		confirmation_height_store_partial,
 		final_vote_store_partial,
+		reverse_link_store_partial,
 		version_store_partial
 	},
 	// clang-format on
@@ -66,6 +67,7 @@ nano::mdb_store::mdb_store (nano::logger_mt & logger_a, boost::filesystem::path 
 	peer_store_partial{ *this },
 	confirmation_height_store_partial{ *this },
 	final_vote_store_partial{ *this },
+	reverse_link_store_partial{ *this },
 	unchecked_mdb_store{ *this },
 	version_store_partial{ *this },
 	logger (logger_a),
@@ -223,6 +225,7 @@ void nano::mdb_store::open_databases (bool & error_a, nano::transaction const & 
 	error_a |= mdb_dbi_open (env.tx (transaction_a), "pending", flags, &pending_v0_handle) != 0;
 	pending_handle = pending_v0_handle;
 	error_a |= mdb_dbi_open (env.tx (transaction_a), "final_votes", flags, &final_votes_handle) != 0;
+	error_a |= mdb_dbi_open (env.tx (transaction_a), "reverse_links", flags, &reverse_links_handle) != 0;
 
 	auto version_l = version.get (transaction_a);
 	if (version_l < 19)
@@ -886,6 +889,8 @@ MDB_dbi nano::mdb_store::table_to_dbi (tables table_a) const
 			return confirmation_height_handle;
 		case tables::final_votes:
 			return final_votes_handle;
+		case tables::reverse_links:
+			return reverse_links_handle;
 		default:
 			release_assert (false);
 			return peers_handle;
