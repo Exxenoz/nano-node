@@ -91,6 +91,11 @@ public:
 		return store.template make_iterator<nano::account, nano::confirmation_height_info> (transaction_a, tables::confirmation_height);
 	}
 
+	nano::store_iterator<nano::account, nano::confirmation_height_info> rbegin (nano::transaction const & transaction_a) const override
+	{
+		return store.template make_iterator<nano::account, nano::confirmation_height_info> (transaction_a, tables::confirmation_height, false);
+	}
+
 	nano::store_iterator<nano::account, nano::confirmation_height_info> end () const override
 	{
 		return nano::store_iterator<nano::account, nano::confirmation_height_info> (nullptr);

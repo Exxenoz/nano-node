@@ -733,6 +733,7 @@ public:
 	virtual void clear (nano::write_transaction const &) = 0;
 	virtual nano::store_iterator<nano::account, nano::confirmation_height_info> begin (nano::transaction const & transaction_a, nano::account const & account_a) const = 0;
 	virtual nano::store_iterator<nano::account, nano::confirmation_height_info> begin (nano::transaction const & transaction_a) const = 0;
+	virtual nano::store_iterator<nano::account, nano::confirmation_height_info> rbegin (nano::transaction const & transaction_a) const = 0;
 	virtual nano::store_iterator<nano::account, nano::confirmation_height_info> end () const = 0;
 	virtual void for_each_par (std::function<void (nano::read_transaction const &, nano::store_iterator<nano::account, nano::confirmation_height_info>, nano::store_iterator<nano::account, nano::confirmation_height_info>)> const &) const = 0;
 };
