@@ -1108,21 +1108,25 @@ TEST (rpc, account_history)
 		request.put ("action", "account_history");
 		request.put ("account", nano::dev::genesis_key.pub.to_account ());
 		request.put ("include_linked_account", true);
-		request.put ("count", 2);
+		request.put ("count", 3);
+		request.put ("raw", true);
 		auto response (wait_response (system, rpc_ctx, request, 10s));
 		std::vector<std::tuple<std::string, std::string, std::string>> history_l;
 		auto & history_node (response.get_child ("history"));
 		for (auto i (history_node.begin ()), n (history_node.end ()); i != n; ++i)
 		{
-			history_l.push_back (std::make_tuple (i->second.get<std::string> ("type"), i->second.get<std::string> ("hash"), i->second.get<std::string> ("linked_account")));
+			history_l.push_back (std::make_tuple (i->second.get<std::string> ("subtype"), i->second.get<std::string> ("hash"), i->second.get<std::string> ("linked_account")));
 		}
-		ASSERT_EQ (2, history_node.size ());
-		ASSERT_EQ ("receive", std::get<0> (history_l[0]));
-		ASSERT_EQ (ureceive->hash ().to_string (), std::get<1> (history_l[0]));
-		ASSERT_EQ (usend->account ().to_account (), std::get<2> (history_l[0]));
-		ASSERT_EQ ("send", std::get<0> (history_l[1]));
-		ASSERT_EQ (usend->hash ().to_string (), std::get<1> (history_l[1]));
-		ASSERT_EQ (ureceive->account ().to_account (), std::get<2> (history_l[1]));
+		ASSERT_EQ (3, history_node.size ());
+		ASSERT_EQ ("change", std::get<0> (history_l[0]));
+		ASSERT_EQ (uchange->hash ().to_string (), std::get<1> (history_l[0]));
+		ASSERT_EQ (uchange->representative ().to_account (), std::get<2> (history_l[0]));
+		ASSERT_EQ ("receive", std::get<0> (history_l[1]));
+		ASSERT_EQ (ureceive->hash ().to_string (), std::get<1> (history_l[1]));
+		ASSERT_EQ (usend->account ().to_account (), std::get<2> (history_l[1]));
+		ASSERT_EQ ("send", std::get<0> (history_l[2]));
+		ASSERT_EQ (usend->hash ().to_string (), std::get<1> (history_l[2]));
+		ASSERT_EQ (ureceive->account ().to_account (), std::get<2> (history_l[2]));
 	}
 
 	// Test filtering
@@ -4194,6 +4198,14 @@ TEST (rpc, block_info)
 				.work (*node1->work_generate_blocking (key.pub))
 				.build ();
 	ASSERT_EQ (nano::block_status::progress, node1->process (open));
+	auto change = builder
+				  .change ()
+				  .previous (open->hash ())
+				  .representative (nano::dev::genesis_key.pub)
+				  .sign (key.prv, key.pub)
+				  .work (*node1->work_generate_blocking (open->hash ()))
+				  .build ();
+	ASSERT_EQ (nano::block_status::progress, node1->process (change));
 	auto const rpc_ctx = add_rpc (system, node1);
 
 	// Test successor
@@ -4238,6 +4250,15 @@ TEST (rpc, block_info)
 		request.put ("include_linked_account", "true");
 		auto response (wait_response (system, rpc_ctx, request));
 		ASSERT_EQ (response.get<std::string> ("linked_account"), send->account ().to_account ());
+	}
+	// Test include_linked_account - change block
+	{
+		boost::property_tree::ptree request;
+		request.put ("action", "block_info");
+		request.put ("hash", change->hash ().to_string ());
+		request.put ("include_linked_account", "true");
+		auto response (wait_response (system, rpc_ctx, request));
+		ASSERT_EQ (response.get<std::string> ("linked_account"), change->representative ().to_account ());
 	}
 }
 

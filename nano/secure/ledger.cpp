@@ -1180,6 +1180,14 @@ std::optional<nano::account> nano::ledger::linked_account (secure::transaction c
 	{
 		return any.block_account (transaction, block.source ());
 	}
+	else if (block.is_change ())
+	{
+		return block.representative ();
+	}
+	else if (block.is_epoch ())
+	{
+		return epoch_signer (block.link ());
+	}
 
 	return std::nullopt;
 }
