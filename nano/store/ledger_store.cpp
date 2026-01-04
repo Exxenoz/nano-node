@@ -17,7 +17,6 @@
 #include <nano/store/ledger/pruned.hpp>
 #include <nano/store/ledger/rep_weight.hpp>
 #include <nano/store/ledger/successor.hpp>
-#include <nano/store/ledger/version.hpp>
 #include <nano/store/ledger_store.hpp>
 
 namespace nano::store
@@ -53,7 +52,6 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	peer_impl{ std::make_unique<nano::store::ledger::peer_view> (*backend_impl) },
 	confirmation_height_impl{ std::make_unique<nano::store::ledger::confirmation_height_view> (*backend_impl) },
 	final_vote_impl{ std::make_unique<nano::store::ledger::final_vote_view> (*backend_impl) },
-	version_impl{ std::make_unique<nano::store::ledger::version_view> (*backend_impl) },
 	backend{ *backend_impl },
 	successor{ *successor_impl },
 	block{ *block_impl },
@@ -64,8 +62,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	pruned{ *pruned_impl },
 	peer{ *peer_impl },
 	confirmation_height{ *confirmation_height_impl },
-	final_vote{ *final_vote_impl },
-	version{ *version_impl }
+	final_vote{ *final_vote_impl }
 {
 	// Skip automatic open/upgrade when defer_open is set (used for testing individual upgrades)
 	if (params.defer_open)
@@ -352,7 +349,7 @@ void ledger_store::upgrade_v22_to_v23 ()
 		});
 
 		logger.info (nano::log::type::ledger_upgrade, "Done processing {} accounts", processed);
-		version.put (transaction, 23);
+		backend.set_version (transaction, 23);
 	}
 	backend.close ();
 
@@ -371,7 +368,7 @@ void ledger_store::upgrade_v23_to_v24 ()
 		backend.drop_table ("frontiers");
 
 		auto transaction = backend.tx_begin_write ();
-		version.put (transaction, 24);
+		backend.set_version (transaction, 24);
 	}
 	backend.close ();
 
@@ -455,6 +452,16 @@ nano::store::open_mode ledger_store::get_mode () const
 uint64_t ledger_store::count (nano::store::transaction const & txn, nano::store::table table) const
 {
 	return backend.count (txn, table);
+}
+
+auto ledger_store::get_version (nano::store::transaction const & txn) const -> nano::store::backend_version_t
+{
+	return backend.get_version (txn);
+}
+
+void ledger_store::set_version (nano::store::write_transaction const & txn, nano::store::backend_version_t version)
+{
+	backend.set_version (txn, version);
 }
 
 nano::store::write_transaction ledger_store::tx_begin_write ()

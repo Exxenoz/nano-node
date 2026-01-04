@@ -62,7 +62,6 @@
 #include <nano/store/ledger/pending.hpp>
 #include <nano/store/ledger/pruned.hpp>
 #include <nano/store/ledger/rep_weight.hpp>
-#include <nano/store/ledger/version.hpp>
 #include <nano/store/ledger_store.hpp>
 #include <nano/store/rocksdb/backend_rocksdb.hpp>
 #include <nano/weights/bootstrap_weights.hpp>
@@ -875,7 +874,7 @@ std::shared_ptr<nano::node> nano::node::shared ()
 int nano::node::store_version ()
 {
 	auto transaction (store.tx_begin_read ());
-	return store.version.get (transaction);
+	return store.get_version (transaction);
 }
 
 nano::bootstrap_weights nano::node::get_bootstrap_weights () const

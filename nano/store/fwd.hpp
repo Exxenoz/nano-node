@@ -23,5 +23,4 @@ class pending_view;
 class pruned_view;
 class successor_view;
 class rep_weight_view;
-class version_view;
 }

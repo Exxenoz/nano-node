@@ -25,7 +25,6 @@
 #include <nano/store/ledger/pending.hpp>
 #include <nano/store/ledger/pruned.hpp>
 #include <nano/store/ledger/rep_weight.hpp>
-#include <nano/store/ledger/version.hpp>
 #include <nano/store/ledger_store.hpp>
 
 #include <stack>

@@ -14,7 +14,6 @@
 #include <nano/store/ledger/pending.hpp>
 #include <nano/store/ledger/rep_weight.hpp>
 #include <nano/store/ledger/successor.hpp>
-#include <nano/store/ledger/version.hpp>
 #include <nano/store/ledger_store.hpp>
 #include <nano/store/tables.hpp>
 #include <nano/store/typed_iterator.hpp>
@@ -180,7 +179,7 @@ TEST (ledger_upgrades, current_version_read_only)
 	nano::test::default_logger ());
 
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 
 	// Verify we can read genesis account
 	nano::account_info info;
@@ -213,7 +212,7 @@ TEST (ledger_upgrades, current_version_no_upgrade)
 	nano::test::default_logger ());
 
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 }
 
 namespace
@@ -363,7 +362,7 @@ TEST (ledger_upgrades, upgrade_v22_to_v23_rep_weights)
 
 	// Verify rep weights were correctly calculated
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 
 	// rep_a should have weight from account_1 + account_2 = 1000 + 500 = 1500
 	ASSERT_EQ (store.rep_weight.get (tx, rep_a), 1500);
@@ -517,7 +516,7 @@ TEST (ledger_upgrades, upgrade_v22_to_v23_stale_rep_weights)
 
 	// Verify rep weights are correct (not corrupted by stale data)
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 
 	// rep_a should have correct weight from account_1 = 1000 (not stale 999999)
 	ASSERT_EQ (store.rep_weight.get (tx, rep_a), 1000);
@@ -750,7 +749,7 @@ TEST (ledger_upgrades, full_upgrade_v21_to_current)
 
 	// Verify final version
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 
 	// Verify account still exists
 	nano::account_info account_info;
@@ -812,7 +811,7 @@ TEST (ledger_upgrades, upgrade_backup)
 
 	// Verify version was upgraded
 	auto tx = store.tx_begin_read ();
-	ASSERT_EQ (store.version.get (tx), nano::store::ledger_store::version_current);
+	ASSERT_EQ (store.get_version (tx), nano::store::ledger_store::version_current);
 
 	// Verify backup was created
 	ASSERT_TRUE (backup_exists ());
