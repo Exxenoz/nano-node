@@ -40,3 +40,23 @@ void nano::ext_ledger::initialize ()
 
 	initialized = true;
 }
+
+void nano::ext_ledger::clear (nano::store::write_transaction const & txn)
+{
+	nano::store::ledger_store & store = ledger.store;
+
+	release_assert (store.ext.is_initialized (), "Extended ledger store must be initialized");
+
+	store.ext.clear (txn);
+}
+
+void nano::ext_ledger::drop (nano::store::write_transaction const & txn)
+{
+	nano::store::ledger_store & store = ledger.store;
+
+	release_assert (store.ext.is_initialized (), "Extended ledger store must be initialized");
+
+	store.ext.drop (txn);
+
+	initialized = false;
+}

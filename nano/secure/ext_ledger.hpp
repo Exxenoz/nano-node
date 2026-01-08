@@ -17,6 +17,8 @@ public:
 
 	bool is_initialized ();
 	void initialize ();
+	void clear (nano::store::write_transaction const &);
+	void drop (nano::store::write_transaction const &);
 
 private:
 	nano::ledger & ledger;

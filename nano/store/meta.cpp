@@ -18,6 +18,13 @@ void meta_view::put (nano::store::write_transaction const & txn, nano::store::me
 	backend.release_assert_success (status);
 }
 
+void meta_view::del (nano::store::write_transaction const & txn, nano::store::meta_key meta_key)
+{
+	nano::uint256_union db_key{ static_cast<uint64_t> (meta_key) };
+	auto status = backend.del (txn, nano::store::table::meta, db_key);
+	backend.release_assert_success (status);
+}
+
 auto meta_view::get (nano::store::transaction const & txn, nano::store::meta_key meta_key) const -> std::optional<nano::store::meta_value_t>
 {
 	nano::uint256_union db_key{ static_cast<uint64_t> (meta_key) };

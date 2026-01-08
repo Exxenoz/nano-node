@@ -21,6 +21,7 @@ public:
 	explicit meta_view (nano::store::backend &);
 
 	void put (nano::store::write_transaction const &, nano::store::meta_key meta_key, nano::store::meta_value_t meta_value);
+	void del (nano::store::write_transaction const &, nano::store::meta_key meta_key);
 	std::optional<nano::store::meta_value_t> get (nano::store::transaction const &, nano::store::meta_key meta_key) const;
 	bool exists (nano::store::transaction const &, nano::store::meta_key meta_key) const;
 

@@ -39,6 +39,8 @@ public:
 	void perform_upgrades (nano::store::backend_meta const &, bool backup_before_upgrade);
 
 	uint64_t count (nano::store::transaction const &, table) const;
+	void clear (nano::store::write_transaction const &);
+	void drop (nano::store::write_transaction const &);
 	bool empty (nano::store::transaction const &) const;
 
 	nano::store::ext_ledger_flags get_flags (nano::store::transaction const &) const;

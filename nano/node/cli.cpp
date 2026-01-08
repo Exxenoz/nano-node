@@ -8,6 +8,7 @@
 #include <nano/node/inactive_node.hpp>
 #include <nano/node/migrations.hpp>
 #include <nano/node/node.hpp>
+#include <nano/secure/ext_ledger.hpp>
 #include <nano/secure/ledger.hpp>
 #include <nano/secure/ledger_set_any.hpp>
 #include <nano/secure/ledger_set_cemented.hpp>
@@ -55,6 +56,8 @@ void nano::add_node_options (boost::program_options::options_description & descr
 	("account_create", "Insert next deterministic key in to <wallet>")
 	("account_get", "Get account number for the <key>")
 	("account_key", "Get the public key for <account>")
+	("extended_ledger_clear", "Clear extended ledger data. Data is recreated on daemon startup.")
+	("extended_ledger_drop", "Drop extended ledger completely. Tables and data are recreated on daemon startup if extended_ledger option is enabled.")
 	("vacuum", "Compact database. If data_path is missing, the database in data directory is compacted.")
 	("snapshot", "Compact database and create snapshot, functions similar to vacuum but does not replace the existing database")
 	("data_path", boost::program_options::value<std::string> (), "Use the supplied path as the data directory")
@@ -238,6 +241,8 @@ void database_write_lock_error (std::error_code & ec)
 void copy_database (std::filesystem::path const & data_path, boost::program_options::variables_map const & vm, std::filesystem::path const & output_path)
 {
 	bool needs_to_write = vm.count ("unchecked_clear") || vm.count ("clear_send_ids") || vm.count ("online_weight_clear") || vm.count ("peer_clear") || vm.count ("confirmation_height_clear") || vm.count ("final_vote_clear");
+	needs_to_write |= vm.count ("extended_ledger_clear");
+	needs_to_write |= vm.count ("extended_ledger_drop");
 
 	auto node_flags = nano::inactive_node_flag_defaults ();
 	node_flags.read_only = !needs_to_write;
@@ -269,6 +274,18 @@ void copy_database (std::filesystem::path const & data_path, boost::program_opti
 	if (vm.count ("final_vote_clear"))
 	{
 		node.node->store.final_vote.clear ();
+	}
+
+	if (node.node->ledger.ext.is_initialized ())
+	{
+		if (vm.count ("extended_ledger_clear"))
+		{
+			node.node->ledger.ext.clear (store.tx_begin_write ());
+		}
+		if (vm.count ("extended_ledger_drop"))
+		{
+			node.node->ledger.ext.drop (store.tx_begin_write ());
+		}
 	}
 
 	node.node->copy_with_compaction (output_path);
@@ -567,6 +584,56 @@ std::error_code nano::handle_node_options (boost::program_options::variables_map
 		{
 			std::cerr << "rollback command requires one <hash> option\n";
 			ec = nano::error_cli::invalid_arguments;
+		}
+	}
+	else if (vm.count ("extended_ledger_clear"))
+	{
+		std::filesystem::path data_path = vm.count ("data_path") ? std::filesystem::path (vm["data_path"].as<std::string> ()) : nano::working_path ();
+		auto node_flags = nano::inactive_node_flag_defaults ();
+		node_flags.read_only = false;
+		nano::update_flags (node_flags, vm);
+		try
+		{
+			nano::inactive_node node (data_path, node_flags);
+			if (node.node->ledger.ext.is_initialized ())
+			{
+				auto transaction (node.node->store.tx_begin_write ());
+				node.node->ledger.ext.clear (transaction);
+				std::cout << "Extended ledger cleared" << std::endl;
+			}
+			else
+			{
+				std::cerr << "Extended ledger is not initialized." << std::endl;
+			}
+		}
+		catch (std::exception const &)
+		{
+			database_write_lock_error (ec);
+		}
+	}
+	else if (vm.count ("extended_ledger_drop"))
+	{
+		std::filesystem::path data_path = vm.count ("data_path") ? std::filesystem::path (vm["data_path"].as<std::string> ()) : nano::working_path ();
+		auto node_flags = nano::inactive_node_flag_defaults ();
+		node_flags.read_only = false;
+		nano::update_flags (node_flags, vm);
+		try
+		{
+			nano::inactive_node node (data_path, node_flags);
+			if (node.node->ledger.ext.is_initialized ())
+			{
+				auto transaction (node.node->store.tx_begin_write ());
+				node.node->ledger.ext.drop (transaction);
+				std::cout << "Extended ledger dropped" << std::endl;
+			}
+			else
+			{
+				std::cerr << "Extended ledger is not initialized." << std::endl;
+			}
+		}
+		catch (std::exception const &)
+		{
+			database_write_lock_error (ec);
 		}
 	}
 	else if (vm.count ("unchecked_clear"))

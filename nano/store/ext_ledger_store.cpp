@@ -133,6 +133,41 @@ uint64_t ext_ledger_store::count (nano::store::transaction const & txn, table ta
 	return backend.count (txn, table);
 }
 
+void ext_ledger_store::clear (nano::store::write_transaction const & txn)
+{
+	release_assert (is_initialized (), "Extended ledger store must be initialized");
+
+	meta.put (txn, nano::store::meta_key::ext_ledger_flags, 0);
+
+	// Clear extended ledger tables
+	for (auto const & [table, name] : ext_ledger_store::schema_current)
+	{
+		if (table != nano::store::table::meta)
+		{
+			backend.clear (table);
+		}
+	}
+}
+
+void ext_ledger_store::drop (nano::store::write_transaction const & txn)
+{
+	release_assert (is_initialized (), "Extended ledger store must be initialized");
+
+	meta.del (txn, nano::store::meta_key::ext_ledger_version);
+	meta.del (txn, nano::store::meta_key::ext_ledger_flags);
+
+	// Drop extended ledger tables
+	for (auto const & [table, name] : ext_ledger_store::schema_current)
+	{
+		if (table != nano::store::table::meta)
+		{
+			backend.drop_table (name);
+		}
+	}
+
+	initialized = false;
+}
+
 bool ext_ledger_store::empty (nano::store::transaction const & txn) const
 {
 	for (auto const & [table, table_name] : schema_current)
