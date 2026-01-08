@@ -7,6 +7,7 @@ namespace nano::store
 enum class version_key : uint64_t
 {
 	ledger = 1,
+	ext_ledger = 2,
 };
 
 using version_value_t = uint64_t;

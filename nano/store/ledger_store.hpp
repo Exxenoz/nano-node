@@ -13,6 +13,7 @@ namespace nano::store
 {
 struct ledger_store_params
 {
+	bool extended_ledger{ false };
 	bool backup_before_upgrade{ false };
 	bool defer_open{ false }; // If true, skip automatic open/upgrade in constructor (for testing)
 };
@@ -54,6 +55,7 @@ public:
 
 private:
 	std::unique_ptr<nano::store::backend> backend_impl;
+	std::unique_ptr<nano::store::ext_ledger_store> ext_impl;
 	std::unique_ptr<nano::store::ledger::successor_view> successor_impl;
 	std::unique_ptr<nano::store::ledger::block_view> block_impl;
 	std::unique_ptr<nano::store::ledger::account_view> account_impl;
@@ -67,6 +69,7 @@ private:
 
 public:
 	nano::store::backend & backend;
+	nano::store::ext_ledger_store & ext;
 	nano::store::ledger::successor_view & successor;
 	nano::store::ledger::block_view & block;
 	nano::store::ledger::account_view & account;

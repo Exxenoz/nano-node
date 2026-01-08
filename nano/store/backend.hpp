@@ -37,7 +37,9 @@ namespace nano::store
 {
 struct backend_meta
 {
-	nano::store::version_value_t ledger_version;
+	nano::store::version_value_t ledger_version{ 0 };
+	nano::store::version_value_t ext_ledger_version{ 0 };
+	uint64_t ext_ledger_flags{ 0 };
 };
 
 using column_definition = std::pair<nano::store::table, std::string>;

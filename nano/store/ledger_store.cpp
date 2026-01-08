@@ -7,6 +7,7 @@
 #include <nano/lib/stream.hpp>
 #include <nano/store/backend.hpp>
 #include <nano/store/db_val_templ.hpp>
+#include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger/account.hpp>
 #include <nano/store/ledger/block.hpp>
 #include <nano/store/ledger/confirmation_height.hpp>
@@ -42,6 +43,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	stats{ stats_a },
 	logger{ logger_a },
 	backend_impl{ std::move (backend_a) },
+	ext_impl{ std::make_unique<nano::store::ext_ledger_store> (*this, *backend_impl, stats_a, logger_a) },
 	successor_impl{ std::make_unique<nano::store::ledger::successor_view> (*backend_impl) },
 	block_impl{ std::make_unique<nano::store::ledger::block_view> (*backend_impl, *successor_impl) },
 	account_impl{ std::make_unique<nano::store::ledger::account_view> (*backend_impl) },
@@ -53,6 +55,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	confirmation_height_impl{ std::make_unique<nano::store::ledger::confirmation_height_view> (*backend_impl) },
 	final_vote_impl{ std::make_unique<nano::store::ledger::final_vote_view> (*backend_impl) },
 	backend{ *backend_impl },
+	ext{ *ext_impl },
 	successor{ *successor_impl },
 	block{ *block_impl },
 	account{ *account_impl },
@@ -146,9 +149,19 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 		backend.create (schema_current, version_current);
 	}
 
-	backend.open (schema_current, mode);
-
+	backend.open (backend::schema_meta, nano::store::open_mode::read_only);
 	release_assert (backend.get_meta ().ledger_version == version_current, "ledger database version after initialization is not current");
+	backend.close ();
+
+	if (params.extended_ledger || meta.ext_ledger_version > 0)
+	{
+		ext.initialize (meta, mode, params.backup_before_upgrade && !needs_upgrade);
+		// Note: backend.open() using the merged ledger + extended schema is intentionally performed inside ext.initialize().
+	}
+	else
+	{
+		backend.open (schema_current, mode);
+	}
 }
 
 ledger_store::~ledger_store () = default;

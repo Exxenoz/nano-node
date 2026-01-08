@@ -72,6 +72,7 @@ enum class type
 	ledger,
 	ledger_store,
 	ledger_upgrade,
+	ext_ledger_store,
 	lmdb,
 	rocksdb,
 	txn_tracker,

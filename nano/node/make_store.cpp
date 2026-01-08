@@ -53,6 +53,7 @@ std::unique_ptr<nano::store::ledger_store> nano::make_store (nano::logger & logg
 	release_assert (backend != nullptr);
 
 	nano::store::ledger_store_params params;
+	params.extended_ledger = node_config.extended_ledger;
 	params.backup_before_upgrade = node_config.backup_before_upgrade;
 
 	return std::make_unique<nano::store::ledger_store> (std::move (backend), mode, stats, logger, params);

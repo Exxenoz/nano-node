@@ -9,6 +9,8 @@ namespace nano::store
 enum class meta_key : uint64_t
 {
 	ledger_version = 1,
+	ext_ledger_version = 2,
+	ext_ledger_flags = 3,
 };
 
 using meta_value_t = uint64_t;

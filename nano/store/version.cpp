@@ -34,6 +34,8 @@ nano::store::meta_key version_view::to_meta_key (nano::store::version_key versio
 	{
 		case nano::store::version_key::ledger:
 			return nano::store::meta_key::ledger_version;
+		case nano::store::version_key::ext_ledger:
+			return nano::store::meta_key::ext_ledger_version;
 		default:
 			release_assert (false);
 	}

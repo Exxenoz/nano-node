@@ -134,6 +134,7 @@ public:
 	nano::rocksdb_config rocksdb_config;
 	nano::lmdb_config lmdb_config;
 	nano::database_backend database_backend{ nano::default_database_backend () };
+	bool extended_ledger{ false };
 	bool enable_upnp{ true };
 	std::size_t max_ledger_notifications{ 300 };
 
