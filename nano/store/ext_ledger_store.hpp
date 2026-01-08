@@ -14,6 +14,7 @@ namespace nano::store
 enum class ext_ledger_flags : uint64_t
 {
 	none = 0,
+	receive_block_by_send_block_initialized = 1 << 0,
 };
 
 inline nano::store::ext_ledger_flags operator| (nano::store::ext_ledger_flags a, nano::store::ext_ledger_flags b)
@@ -55,9 +56,11 @@ private:
 
 private:
 	std::unique_ptr<nano::store::meta_view> meta_impl;
+	std::unique_ptr<nano::store::ext_ledger::receive_block_by_send_block_view> receive_block_by_send_block_impl;
 
 public:
 	nano::store::meta_view & meta;
+	nano::store::ext_ledger::receive_block_by_send_block_view & receive_block_by_send_block;
 
 public:
 	static nano::store::version_value_t constexpr version_minimum{ 1 };

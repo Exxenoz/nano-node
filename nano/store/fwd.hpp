@@ -14,6 +14,11 @@ class transaction;
 class write_transaction;
 }
 
+namespace nano::store::ext_ledger
+{
+class receive_block_by_send_block_view;
+}
+
 namespace nano::store::ledger
 {
 class account_view;

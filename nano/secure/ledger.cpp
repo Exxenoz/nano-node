@@ -17,6 +17,7 @@
 #include <nano/secure/ledger_set_any.hpp>
 #include <nano/secure/ledger_set_cemented.hpp>
 #include <nano/secure/rep_weights.hpp>
+#include <nano/store/ext_ledger/receive_block_by_send_block.hpp>
 #include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger/account.hpp>
 #include <nano/store/ledger/block.hpp>
@@ -70,10 +71,22 @@ auto nano::ledger::tx_begin_read () const -> secure::read_transaction
 void nano::ledger::put_block (nano::store::write_transaction const & transaction_a, nano::block_hash const & hash_a, nano::block const & block_a)
 {
 	store.block.put (transaction_a, hash_a, block_a);
+
+	if (ext.is_initialized ())
+	{
+		ext.on_put_block (transaction_a, hash_a, block_a);
+	}
 }
 
 void nano::ledger::del_block (nano::store::write_transaction const & transaction_a, nano::block_hash const & hash_a)
 {
+	if (ext.is_initialized ())
+	{
+		auto block = store.block.get (transaction_a, hash_a);
+		release_assert (block, "Block to be deleted was not found in the ledger");
+		ext.on_del_block (transaction_a, hash_a, *block);
+	}
+
 	store.block.del (transaction_a, hash_a);
 }
 
@@ -648,6 +661,17 @@ std::shared_ptr<nano::block> nano::ledger::find_receive_block_by_send_hash (secu
 {
 	std::shared_ptr<nano::block> result;
 	debug_assert (send_block_hash != 0);
+
+	// Use the extended ledger index to directly look up the receive block by send block hash, if enabled
+	if (store.ext.is_initialized ())
+	{
+		auto receive_block_hash = store.ext.receive_block_by_send_block.get (transaction, send_block_hash);
+		if (receive_block_hash.has_value ())
+		{
+			return store.block.get (transaction, receive_block_hash.value ());
+		}
+		return nullptr;
+	}
 
 	// get the cemented frontier
 	nano::confirmation_height_info info;

@@ -1,12 +1,14 @@
 #include <nano/lib/logging.hpp>
 #include <nano/lib/stats.hpp>
 #include <nano/store/backend.hpp>
+#include <nano/store/ext_ledger/receive_block_by_send_block.hpp>
 #include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger_store.hpp>
 
 namespace nano::store
 {
 nano::store::column_schema const ext_ledger_store::schema_current{
+	{ nano::store::table::ext_receive_block_by_send_block, "ext_receive_block_by_send_block" },
 	{ nano::store::table::meta, "meta" }
 };
 }
@@ -18,7 +20,9 @@ ext_ledger_store::ext_ledger_store (nano::store::backend & backend_a, nano::stat
 	stats{ stats_a },
 	logger{ logger_a },
 	meta_impl{ std::make_unique<nano::store::meta_view> (backend_a) },
-	meta{ *meta_impl }
+	receive_block_by_send_block_impl{ std::make_unique<nano::store::ext_ledger::receive_block_by_send_block_view> (backend_a) },
+	meta{ *meta_impl },
+	receive_block_by_send_block{ *receive_block_by_send_block_impl }
 {
 }
 

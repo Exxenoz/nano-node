@@ -354,6 +354,7 @@ bool backend_rocksdb::count_is_exact (nano::store::table table) const
 		case nano::store::table::blocks:
 		case nano::store::table::confirmation_height:
 		case nano::store::table::default_unused:
+		case nano::store::table::ext_receive_block_by_send_block:
 		case nano::store::table::meta:
 		case nano::store::table::online_weight:
 		case nano::store::table::peers:

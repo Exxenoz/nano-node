@@ -11,6 +11,7 @@ enum class table
 	blocks,
 	confirmation_height,
 	default_unused, // RocksDB only
+	ext_receive_block_by_send_block,
 	final_votes,
 	meta,
 	online_weight,

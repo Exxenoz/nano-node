@@ -6,6 +6,8 @@ add_library(
   ext_ledger_store.cpp
   backend.hpp
   backend.cpp
+  ext_ledger/receive_block_by_send_block.hpp
+  ext_ledger/receive_block_by_send_block.cpp
   ledger/account.hpp
   ledger/account.cpp
   ledger/block.hpp
