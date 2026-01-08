@@ -155,6 +155,13 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 
 	if (params.extended_ledger || meta.ext_ledger_version > 0)
 	{
+		if (!params.extended_ledger)
+		{
+			logger.warn (nano::log::type::ledger_store,
+			"Extended ledger data is present, but the 'extended_ledger' option is disabled. "
+			"For consistency, the node will continue operating in extended ledger mode. "
+			"To fully disable it, the existing extended ledger must be dropped using the '--extended_ledger_drop' CLI option.");
+		}
 		ext.initialize (meta, mode, params.backup_before_upgrade && !needs_upgrade);
 		// Note: backend.open() using the merged ledger + extended schema is intentionally performed inside ext.initialize().
 	}
