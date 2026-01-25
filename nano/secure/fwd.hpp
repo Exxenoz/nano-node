@@ -10,6 +10,7 @@ class ext_ledger;
 class ledger;
 class ledger_cache;
 class ledger_constants;
+class ledger_options;
 class network_params;
 class pending_info;
 class pending_key;

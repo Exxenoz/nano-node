@@ -34,13 +34,21 @@ private:
 	std::atomic<uint64_t> account_count{ 0 };
 };
 
+class ledger_options
+{
+public:
+	nano::generate_cache_flags generate_cache_flags{};
+	nano::uint128_t min_rep_weight{ 0 };
+	uint64_t max_backlog{ 0 };
+};
+
 class ledger final
 {
 	template <typename T>
 	friend class receivable_iterator;
 
 public:
-	ledger (nano::store::ledger_store &, nano::network_params const &, nano::stats &, nano::logger &, nano::generate_cache_flags = {}, nano::uint128_t min_rep_weight = 0, uint64_t max_backlog = 0);
+	ledger (nano::store::ledger_store &, nano::network_params const &, nano::stats &, nano::logger &, nano::ledger_options const & options_a = {});
 	~ledger ();
 
 	/** Start read-write transaction */
@@ -135,7 +143,7 @@ public:
 	nano::bootstrap_weights bootstrap_weights{};
 
 private:
-	void initialize (nano::generate_cache_flags const &);
+	void initialize (nano::ledger_options const &);
 	void cement_one (secure::write_transaction &, nano::block const & block);
 
 	std::unique_ptr<ledger_set_any> any_impl;

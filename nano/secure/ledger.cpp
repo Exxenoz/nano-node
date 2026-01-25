@@ -34,14 +34,14 @@
 
 #include <cryptopp/words.h>
 
-nano::ledger::ledger (nano::store::ledger_store & store_a, nano::network_params const & params_a, nano::stats & stats_a, nano::logger & logger_a, nano::generate_cache_flags generate_cache_flags_a, nano::uint128_t min_rep_weight_a, uint64_t max_backlog_a) :
+nano::ledger::ledger (nano::store::ledger_store & store_a, nano::network_params const & params_a, nano::stats & stats_a, nano::logger & logger_a, nano::ledger_options const & options_a) :
 	constants{ params_a.ledger },
 	work{ params_a.work },
 	store{ store_a },
 	stats{ stats_a },
 	logger{ logger_a },
-	rep_weights{ store_a.rep_weight, min_rep_weight_a },
-	max_backlog_size{ max_backlog_a },
+	rep_weights{ store_a.rep_weight, options_a.min_rep_weight },
+	max_backlog_size{ options_a.max_backlog },
 	any_impl{ std::make_unique<ledger_set_any> (*this) },
 	cemented_impl{ std::make_unique<ledger_set_cemented> (*this) },
 	ext_impl{ std::make_unique<nano::ext_ledger> (*this, stats_a, logger_a) },
@@ -49,7 +49,7 @@ nano::ledger::ledger (nano::store::ledger_store & store_a, nano::network_params 
 	cemented{ *cemented_impl },
 	ext{ *ext_impl }
 {
-	initialize (generate_cache_flags_a);
+	initialize (options_a);
 }
 
 nano::ledger::~ledger ()
@@ -115,8 +115,10 @@ void nano::ledger::clear_confirmation_height ()
 	store.confirmation_height.clear ();
 }
 
-void nano::ledger::initialize (nano::generate_cache_flags const & generate_cache_flags)
+void nano::ledger::initialize (nano::ledger_options const & options)
 {
+	nano::generate_cache_flags const & generate_cache_flags = options.generate_cache_flags;
+
 	debug_assert (rep_weights.empty ());
 
 	logger.info (nano::log::type::ledger, "Loading ledger, this may take a while...");
