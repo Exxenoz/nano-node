@@ -38,6 +38,7 @@ class ledger_options
 {
 public:
 	nano::generate_cache_flags generate_cache_flags{};
+	bool inactive_node{ false };
 	nano::uint128_t min_rep_weight{ 0 };
 	uint64_t max_backlog{ 0 };
 };

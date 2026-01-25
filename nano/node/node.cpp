@@ -97,7 +97,7 @@ nano::node::node (std::shared_ptr<boost::asio::io_context> io_ctx_a, std::filesy
 	store{ *store_impl },
 	wallets_store_impl{ std::make_unique<nano::mdb_wallets_store> (application_path_a / "wallets.ldb", config_a.lmdb_config) },
 	wallets_store{ *wallets_store_impl },
-	ledger_impl{ std::make_unique<nano::ledger> (store, network_params, stats, logger, nano::ledger_options{ .generate_cache_flags = flags_a.generate_cache, .min_rep_weight = config.representative_vote_weight_minimum.number (), .max_backlog = config.max_backlog }) },
+	ledger_impl{ std::make_unique<nano::ledger> (store, network_params, stats, logger, nano::ledger_options{ .generate_cache_flags = flags_a.generate_cache, .inactive_node = flags_a.inactive_node, .min_rep_weight = config.representative_vote_weight_minimum.number (), .max_backlog = config.max_backlog }) },
 	ledger{ *ledger_impl },
 	runner_impl{ std::make_unique<nano::thread_runner> (io_ctx_shared, logger, config.io_threads) },
 	runner{ *runner_impl },

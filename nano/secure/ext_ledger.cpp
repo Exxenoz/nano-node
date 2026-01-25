@@ -27,7 +27,7 @@ bool nano::ext_ledger::is_initialized ()
 	return initialized;
 }
 
-void nano::ext_ledger::initialize ()
+void nano::ext_ledger::initialize (nano::ledger_options const & options)
 {
 	nano::store::ledger_store & store = ledger.store;
 
@@ -36,7 +36,7 @@ void nano::ext_ledger::initialize ()
 
 	logger.info (nano::log::type::ext_ledger, "Initializing extended ledger");
 
-	if (store.get_mode () != nano::store::open_mode::read_only)
+	if (!options.inactive_node && store.get_mode () != nano::store::open_mode::read_only)
 	{
 		auto has_flags = [&store] (nano::store::ext_ledger_flags flags) -> bool {
 			return store.ext.has_flags (store.tx_begin_read (), flags);

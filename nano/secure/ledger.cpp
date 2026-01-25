@@ -306,7 +306,7 @@ void nano::ledger::initialize (nano::ledger_options const & options)
 
 	if (store.ext.is_initialized ())
 	{
-		ext.initialize ();
+		ext.initialize (options);
 	}
 }
 

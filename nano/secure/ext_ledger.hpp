@@ -16,7 +16,7 @@ public:
 	~ext_ledger ();
 
 	bool is_initialized ();
-	void initialize ();
+	void initialize (nano::ledger_options const &);
 	void initialize_receive_block_by_send_block_index ();
 
 	void on_put_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
