@@ -20,7 +20,7 @@
 
 namespace
 {
-void reset_confirmation_heights (nano::ledger_constants & constants, nano::store::ledger_store & store);
+void reset_confirmation_heights (nano::ledger & ledger);
 bool is_using_rocksdb (std::filesystem::path const & data_path, boost::program_options::variables_map const & vm, std::error_code & ec);
 }
 
@@ -264,7 +264,7 @@ void copy_database (std::filesystem::path const & data_path, boost::program_opti
 	}
 	if (vm.count ("confirmation_height_clear"))
 	{
-		reset_confirmation_heights (node.node->network_params.ledger, store);
+		reset_confirmation_heights (node.node->ledger);
 	}
 	if (vm.count ("final_vote_clear"))
 	{
@@ -661,11 +661,11 @@ std::error_code nano::handle_node_options (boost::program_options::variables_map
 						if (account == node.node->network_params.ledger.genesis->account ())
 						{
 							conf_height_reset_num = 1;
-							node.node->store.confirmation_height.put (transaction, account, { confirmation_height_info.height, node.node->network_params.ledger.genesis->hash () });
+							node.node->ledger.put_confirmation_height (transaction, account, { confirmation_height_info.height, node.node->network_params.ledger.genesis->hash () });
 						}
 						else
 						{
-							node.node->store.confirmation_height.del (transaction, account);
+							node.node->ledger.del_confirmation_height (transaction, account);
 						}
 
 						std::cout << "Confirmation height of account " << account_str << " is set to " << conf_height_reset_num << std::endl;
@@ -678,7 +678,7 @@ std::error_code nano::handle_node_options (boost::program_options::variables_map
 				}
 				else if (account_str == "all")
 				{
-					reset_confirmation_heights (node.node->network_params.ledger, node.node->store);
+					reset_confirmation_heights (node.node->ledger);
 					std::cout << "Confirmation heights of all accounts (except genesis which is set to 1) are set to 0" << std::endl;
 				}
 				else
@@ -1399,14 +1399,14 @@ std::unique_ptr<nano::inactive_node> nano::default_inactive_node (std::filesyste
 
 namespace
 {
-void reset_confirmation_heights (nano::ledger_constants & constants, nano::store::ledger_store & store)
+void reset_confirmation_heights (nano::ledger & ledger)
 {
 	// First do a clean sweep
-	store.confirmation_height.clear ();
+	ledger.clear_confirmation_height ();
 
 	// Then make sure the confirmation height of the genesis account open block is 1
-	auto transaction = store.tx_begin_write ();
-	store.confirmation_height.put (transaction, constants.genesis->account (), { 1, constants.genesis->hash () });
+	auto transaction = ledger.store.tx_begin_write ();
+	ledger.put_confirmation_height (transaction, ledger.constants.genesis->account (), { 1, ledger.constants.genesis->hash () });
 }
 
 bool is_using_rocksdb (std::filesystem::path const & data_path, boost::program_options::variables_map const & vm, std::error_code & ec)

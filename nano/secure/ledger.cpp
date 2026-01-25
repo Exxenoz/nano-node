@@ -63,6 +63,41 @@ auto nano::ledger::tx_begin_read () const -> secure::read_transaction
 	return secure::read_transaction{ store.tx_begin_read () };
 }
 
+void nano::ledger::put_block (nano::store::write_transaction const & transaction_a, nano::block_hash const & hash_a, nano::block const & block_a)
+{
+	store.block.put (transaction_a, hash_a, block_a);
+}
+
+void nano::ledger::del_block (nano::store::write_transaction const & transaction_a, nano::block_hash const & hash_a)
+{
+	store.block.del (transaction_a, hash_a);
+}
+
+void nano::ledger::put_receivable (nano::store::write_transaction const & transaction_a, nano::pending_key const & key_a, nano::pending_info const & info_a)
+{
+	store.pending.put (transaction_a, key_a, info_a);
+}
+
+void nano::ledger::del_receivable (nano::store::write_transaction const & transaction_a, nano::pending_key const & key_a)
+{
+	store.pending.del (transaction_a, key_a);
+}
+
+void nano::ledger::put_confirmation_height (nano::store::write_transaction const & transaction_a, nano::account const & account_a, nano::confirmation_height_info const & info_a)
+{
+	store.confirmation_height.put (transaction_a, account_a, info_a);
+}
+
+void nano::ledger::del_confirmation_height (nano::store::write_transaction const & transaction_a, nano::account const & account_a)
+{
+	store.confirmation_height.del (transaction_a, account_a);
+}
+
+void nano::ledger::clear_confirmation_height ()
+{
+	store.confirmation_height.clear ();
+}
+
 void nano::ledger::initialize (nano::generate_cache_flags const & generate_cache_flags)
 {
 	debug_assert (rep_weights.empty ());
@@ -365,7 +400,7 @@ void nano::ledger::cement_one (secure::write_transaction & transaction, nano::bl
 {
 	debug_assert ((!store.confirmation_height.get (transaction, block.account ()) && block.sideband ().height == 1) || store.confirmation_height.get (transaction, block.account ()).value ().height + 1 == block.sideband ().height);
 	confirmation_height_info info{ block.sideband ().height, block.hash () };
-	store.confirmation_height.put (transaction, block.account (), info);
+	put_confirmation_height (transaction, block.account (), info);
 	++cache.cemented_count;
 
 	stats.inc (nano::stat::type::confirmation_height, nano::stat::detail::blocks_cemented);
@@ -707,7 +742,7 @@ uint64_t nano::ledger::pruning_action (secure::write_transaction & transaction_a
 		if (block_l != nullptr)
 		{
 			release_assert (cemented.block_exists (transaction_a, hash));
-			store.block.del (transaction_a, hash);
+			del_block (transaction_a, hash);
 			store.pruned.put (transaction_a, hash);
 			hash = block_l->previous ();
 			++pruned_count;

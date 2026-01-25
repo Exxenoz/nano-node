@@ -48,6 +48,15 @@ public:
 	/** Start read-only transaction */
 	secure::read_transaction tx_begin_read () const;
 
+	void update_account (secure::write_transaction const &, nano::account const &, nano::account_info const &, nano::account_info const &);
+	void put_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
+	void del_block (nano::store::write_transaction const &, nano::block_hash const &);
+	void put_receivable (nano::store::write_transaction const &, nano::pending_key const &, nano::pending_info const &);
+	void del_receivable (nano::store::write_transaction const &, nano::pending_key const &);
+	void put_confirmation_height (nano::store::write_transaction const &, nano::account const &, nano::confirmation_height_info const &);
+	void del_confirmation_height (nano::store::write_transaction const &, nano::account const &);
+	void clear_confirmation_height ();
+
 	nano::uint128_t account_receivable (secure::transaction const &, nano::account const &, bool = false) const;
 	/**
 	 * Returns the cached vote weight for the given representative.
@@ -68,7 +77,6 @@ public:
 	nano::block_status process (secure::write_transaction const &, std::shared_ptr<nano::block> block);
 	bool rollback (secure::write_transaction const &, nano::block_hash const &, std::deque<std::shared_ptr<nano::block>> & rollback_list, size_t depth = 0, size_t max_depth = nano::ledger_max_rollback_depth ());
 	bool rollback (secure::write_transaction const &, nano::block_hash const &);
-	void update_account (secure::write_transaction const &, nano::account const &, nano::account_info const &, nano::account_info const &);
 	uint64_t pruning_action (secure::write_transaction &, nano::block_hash const &, uint64_t const);
 	bool is_epoch_link (nano::link const &) const;
 	std::shared_ptr<nano::block> find_receive_block_by_send_hash (secure::transaction const &, nano::account const & destination, nano::block_hash const & send_block_hash);
