@@ -22,8 +22,8 @@ public:
 	void on_put_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
 	void on_del_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
 
-	void clear (nano::store::write_transaction const &);
-	void drop (nano::store::write_transaction const &);
+	void clear ();
+	void drop ();
 
 private:
 	nano::ledger & ledger;

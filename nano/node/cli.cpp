@@ -280,11 +280,11 @@ void copy_database (std::filesystem::path const & data_path, boost::program_opti
 	{
 		if (vm.count ("extended_ledger_clear"))
 		{
-			node.node->ledger.ext.clear (store.tx_begin_write ());
+			node.node->ledger.ext.clear ();
 		}
 		if (vm.count ("extended_ledger_drop"))
 		{
-			node.node->ledger.ext.drop (store.tx_begin_write ());
+			node.node->ledger.ext.drop ();
 		}
 	}
 
@@ -597,8 +597,7 @@ std::error_code nano::handle_node_options (boost::program_options::variables_map
 			nano::inactive_node node (data_path, node_flags);
 			if (node.node->ledger.ext.is_initialized ())
 			{
-				auto transaction (node.node->store.tx_begin_write ());
-				node.node->ledger.ext.clear (transaction);
+				node.node->ledger.ext.clear ();
 				std::cout << "Extended ledger cleared" << std::endl;
 			}
 			else
@@ -622,8 +621,7 @@ std::error_code nano::handle_node_options (boost::program_options::variables_map
 			nano::inactive_node node (data_path, node_flags);
 			if (node.node->ledger.ext.is_initialized ())
 			{
-				auto transaction (node.node->store.tx_begin_write ());
-				node.node->ledger.ext.drop (transaction);
+				node.node->ledger.ext.drop ();
 				std::cout << "Extended ledger dropped" << std::endl;
 			}
 			else

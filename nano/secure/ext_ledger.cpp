@@ -113,22 +113,22 @@ void nano::ext_ledger::on_del_block (nano::store::write_transaction const & txn,
 	}
 }
 
-void nano::ext_ledger::clear (nano::store::write_transaction const & txn)
+void nano::ext_ledger::clear ()
 {
 	nano::store::ledger_store & store = ledger.store;
 
 	release_assert (store.ext.is_initialized (), "Extended ledger store must be initialized");
 
-	store.ext.clear (txn);
+	store.ext.clear ();
 }
 
-void nano::ext_ledger::drop (nano::store::write_transaction const & txn)
+void nano::ext_ledger::drop ()
 {
 	nano::store::ledger_store & store = ledger.store;
 
 	release_assert (store.ext.is_initialized (), "Extended ledger store must be initialized");
 
-	store.ext.drop (txn);
+	store.ext.drop ();
 
 	initialized = false;
 }

@@ -137,11 +137,11 @@ uint64_t ext_ledger_store::count (nano::store::transaction const & txn, table ta
 	return backend.count (txn, table);
 }
 
-void ext_ledger_store::clear (nano::store::write_transaction const & txn)
+void ext_ledger_store::clear ()
 {
 	release_assert (is_initialized (), "Extended ledger store must be initialized");
 
-	meta.put (txn, nano::store::meta_key::ext_ledger_flags, 0);
+	meta.put (tx_begin_write (), nano::store::meta_key::ext_ledger_flags, 0);
 
 	// Clear extended ledger tables
 	for (auto const & [table, name] : ext_ledger_store::schema_current)
@@ -153,12 +153,12 @@ void ext_ledger_store::clear (nano::store::write_transaction const & txn)
 	}
 }
 
-void ext_ledger_store::drop (nano::store::write_transaction const & txn)
+void ext_ledger_store::drop ()
 {
 	release_assert (is_initialized (), "Extended ledger store must be initialized");
 
-	meta.del (txn, nano::store::meta_key::ext_ledger_version);
-	meta.del (txn, nano::store::meta_key::ext_ledger_flags);
+	meta.del (tx_begin_write (), nano::store::meta_key::ext_ledger_version);
+	meta.del (tx_begin_write (), nano::store::meta_key::ext_ledger_flags);
 
 	// Drop extended ledger tables
 	for (auto const & [table, name] : ext_ledger_store::schema_current)
