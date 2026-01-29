@@ -23,6 +23,7 @@ enum class name
 	aec_loop,
 	aec_checkup,
 	aec_notifications,
+	ext_ledger_writer,
 	bootstrap_initiator,
 	bootstrap_connections,
 	voting,
