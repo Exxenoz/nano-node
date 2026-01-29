@@ -22,6 +22,8 @@
 #include <nano/secure/ledger_set_any.hpp>
 #include <nano/secure/ledger_set_cemented.hpp>
 #include <nano/secure/transaction.hpp>
+#include <nano/store/ext_ledger/account_delegators_by_weight.hpp>
+#include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger/account.hpp>
 #include <nano/store/ledger/block.hpp>
 #include <nano/store/ledger/confirmation_height.hpp>
@@ -2254,6 +2256,12 @@ void nano::json_handler::database_txn_tracker ()
 
 void nano::json_handler::delegators ()
 {
+	if (node.store.ext.is_initialized ())
+	{
+		delegators_ext ();
+		return;
+	}
+
 	auto representative (account_impl ());
 	auto count (count_optional_impl (1024));
 	auto threshold (threshold_optional_impl ());
@@ -2287,8 +2295,56 @@ void nano::json_handler::delegators ()
 	response_errors ();
 }
 
+void nano::json_handler::delegators_ext ()
+{
+	if (!node.store.ext.is_initialized ())
+	{
+		ec = nano::error_rpc::requires_ext_ledger;
+	}
+
+	auto representative (account_impl ());
+	auto count (count_optional_impl (1024));
+	auto offset (offset_optional_impl (0));
+	auto threshold (threshold_optional_impl ());
+
+	if (!ec)
+	{
+		auto transaction (node.ledger.tx_begin_read ());
+		boost::property_tree::ptree delegators;
+
+		for (auto i (node.store.ext.account_delegators_by_weight.rupper_bound (transaction, representative)), n (node.store.ext.account_delegators_by_weight.rend (transaction)); i != n && delegators.size () < count; ++i)
+		{
+			nano::account_delegator_by_weight_key const & key (i->first);
+			if (key.representative != representative)
+			{
+				break;
+			}
+			if (key.weight.number () < threshold.number ())
+			{
+				break;
+			}
+			if (offset > 0)
+			{
+				--offset;
+				continue;
+			}
+			delegators.put (key.delegator.to_account (), nano::uint128_union (key.weight).to_string_dec ());
+		}
+
+		response_l.add_child ("delegators", delegators);
+	}
+
+	response_errors ();
+}
+
 void nano::json_handler::delegators_count ()
 {
+	if (node.store.ext.is_initialized ())
+	{
+		delegators_count_ext ();
+		return;
+	}
+
 	auto account (account_impl ());
 	if (!ec)
 	{
@@ -2304,6 +2360,36 @@ void nano::json_handler::delegators_count ()
 		}
 		response_l.put ("count", std::to_string (count));
 	}
+	response_errors ();
+}
+
+void nano::json_handler::delegators_count_ext ()
+{
+	if (!node.store.ext.is_initialized ())
+	{
+		ec = nano::error_rpc::requires_ext_ledger;
+	}
+
+	auto account (account_impl ());
+
+	if (!ec)
+	{
+		auto transaction (node.ledger.tx_begin_read ());
+		uint64_t count (0);
+
+		for (auto i (node.store.ext.account_delegators_by_weight.rupper_bound (transaction, account)), n (node.store.ext.account_delegators_by_weight.rend (transaction)); i != n; ++i)
+		{
+			nano::account_delegator_by_weight_key const & key (i->first);
+			if (key.representative != account)
+			{
+				break;
+			}
+			++count;
+		}
+
+		response_l.put ("count", std::to_string (count));
+	}
+
 	response_errors ();
 }
 
@@ -5326,7 +5412,9 @@ ipc_json_handler_no_arg_func_map create_ipc_json_handler_no_arg_func_map ()
 	no_arg_funcs.emplace ("confirmation_quorum", &nano::json_handler::confirmation_quorum);
 	no_arg_funcs.emplace ("database_txn_tracker", &nano::json_handler::database_txn_tracker);
 	no_arg_funcs.emplace ("delegators", &nano::json_handler::delegators);
+	no_arg_funcs.emplace ("delegators_ext", &nano::json_handler::delegators_ext);
 	no_arg_funcs.emplace ("delegators_count", &nano::json_handler::delegators_count);
+	no_arg_funcs.emplace ("delegators_count_ext", &nano::json_handler::delegators_count_ext);
 	no_arg_funcs.emplace ("deterministic_key", &nano::json_handler::deterministic_key);
 	no_arg_funcs.emplace ("election_statistics", &nano::json_handler::election_statistics);
 	no_arg_funcs.emplace ("epoch_upgrade", &nano::json_handler::epoch_upgrade);
