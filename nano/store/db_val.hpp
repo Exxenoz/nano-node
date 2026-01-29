@@ -9,6 +9,7 @@
 
 namespace nano
 {
+class account_delegator_by_weight_key;
 class account_info;
 class account_info_v22;
 class block;
@@ -49,6 +50,7 @@ public:
 	db_val (nano::uint256_union const &);
 	db_val (nano::uint512_union const &);
 	db_val (nano::qualified_root const &);
+	db_val (nano::account_delegator_by_weight_key const &);
 	db_val (nano::account_info const &);
 	db_val (nano::account_info_v22 const &);
 	db_val (nano::pending_info const &);
@@ -63,6 +65,7 @@ public:
 	explicit operator nano::uint256_union () const;
 	explicit operator nano::uint512_union () const;
 	explicit operator nano::qualified_root () const;
+	explicit operator nano::account_delegator_by_weight_key () const;
 	explicit operator nano::account_info () const;
 	explicit operator nano::account_info_v22 () const;
 	explicit operator nano::pending_info () const;

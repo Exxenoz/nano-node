@@ -5,6 +5,7 @@
 
 namespace nano
 {
+class account_delegator_by_weight_key;
 class account_info;
 class ext_ledger;
 class ledger;

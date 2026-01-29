@@ -17,8 +17,11 @@ public:
 
 	bool is_initialized ();
 	void initialize (nano::ledger_options const &);
+	void initialize_account_delegators_by_weight_index ();
 	void initialize_receive_block_by_send_block_index ();
 
+	void on_put_account (nano::store::write_transaction const &, nano::account const &, nano::account_info const &);
+	void on_del_account (nano::store::write_transaction const &, nano::account const &, nano::account_info const &);
 	void on_put_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
 	void on_del_block (nano::store::write_transaction const &, nano::block_hash const &, nano::block const &);
 

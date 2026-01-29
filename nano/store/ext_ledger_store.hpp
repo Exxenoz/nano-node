@@ -15,6 +15,7 @@ enum class ext_ledger_flags : uint64_t
 {
 	none = 0,
 	receive_block_by_send_block_initialized = 1 << 0,
+	account_delegators_by_weight_initialized = 1 << 1,
 };
 
 inline nano::store::ext_ledger_flags operator| (nano::store::ext_ledger_flags a, nano::store::ext_ledger_flags b)
@@ -55,10 +56,12 @@ private:
 	bool initialized{ false };
 
 private:
+	std::unique_ptr<nano::store::ext_ledger::account_delegators_by_weight_view> account_delegators_by_weight_impl;
 	std::unique_ptr<nano::store::meta_view> meta_impl;
 	std::unique_ptr<nano::store::ext_ledger::receive_block_by_send_block_view> receive_block_by_send_block_impl;
 
 public:
+	nano::store::ext_ledger::account_delegators_by_weight_view & account_delegators_by_weight;
 	nano::store::meta_view & meta;
 	nano::store::ext_ledger::receive_block_by_send_block_view & receive_block_by_send_block;
 

@@ -4,6 +4,7 @@
 #include <nano/lib/memory.hpp>
 #include <nano/lib/stream.hpp>
 #include <nano/lib/vote.hpp>
+#include <nano/secure/account_delegator_by_weight_key.hpp>
 #include <nano/secure/account_info.hpp>
 #include <nano/secure/pending_info.hpp>
 #include <nano/store/db_val.hpp>
@@ -47,6 +48,12 @@ inline db_val::db_val (nano::uint512_union const & value) :
 inline db_val::db_val (nano::qualified_root const & value) :
 	span_view{ reinterpret_cast<uint8_t const *> (&value), sizeof (value) }
 {
+}
+
+inline db_val::db_val (nano::account_delegator_by_weight_key const & value) :
+	span_view{ reinterpret_cast<uint8_t const *> (&value), sizeof (value) }
+{
+	static_assert (std::is_standard_layout<nano::account_delegator_by_weight_key>::value, "Standard layout is required");
 }
 
 inline db_val::db_val (nano::account_info const & value) :
@@ -134,6 +141,15 @@ inline db_val::operator nano::uint512_union () const
 inline db_val::operator nano::qualified_root () const
 {
 	return read_as_bytes<nano::qualified_root> ();
+}
+
+inline db_val::operator nano::account_delegator_by_weight_key () const
+{
+	nano::account_delegator_by_weight_key result;
+	debug_assert (span_view.size () == sizeof (result));
+	static_assert (sizeof (nano::account_delegator_by_weight_key::representative) + sizeof (nano::account_delegator_by_weight_key::weight) + sizeof (nano::account_delegator_by_weight_key::delegator) == sizeof (result), "Packed class");
+	std::copy (span_view.begin (), span_view.end (), reinterpret_cast<uint8_t *> (&result));
+	return result;
 }
 
 inline db_val::operator nano::account_info () const

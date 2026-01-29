@@ -16,6 +16,7 @@ class write_transaction;
 
 namespace nano::store::ext_ledger
 {
+class account_delegators_by_weight_view;
 class receive_block_by_send_block_view;
 }
 

@@ -734,13 +734,25 @@ void nano::ledger::update_account (secure::write_transaction const & transaction
 		{
 			// store.account.put won't erase existing entries if they're in different tables
 			store.account.del (transaction_a, account_a);
+			if (ext.is_initialized ())
+			{
+				ext.on_del_account (transaction_a, account_a, old_a);
+			}
 		}
 		store.account.put (transaction_a, account_a, new_a);
+		if (ext.is_initialized ())
+		{
+			ext.on_put_account (transaction_a, account_a, new_a);
+		}
 	}
 	else
 	{
 		debug_assert (!store.confirmation_height.exists (transaction_a, account_a));
 		store.account.del (transaction_a, account_a);
+		if (ext.is_initialized ())
+		{
+			ext.on_del_account (transaction_a, account_a, old_a);
+		}
 		release_assert (cache.account_count > 0);
 		--cache.account_count;
 	}

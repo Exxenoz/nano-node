@@ -1,5 +1,7 @@
 add_library(
   secure
+  account_delegator_by_weight_key.hpp
+  account_delegator_by_weight_key.cpp
   account_info.hpp
   account_info.cpp
   account_iterator.cpp
