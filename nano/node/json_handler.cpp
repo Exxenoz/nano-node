@@ -23,6 +23,7 @@
 #include <nano/secure/ledger_set_cemented.hpp>
 #include <nano/secure/transaction.hpp>
 #include <nano/store/ext_ledger/account_delegators_by_weight.hpp>
+#include <nano/store/ext_ledger/account_receivables_by_amount.hpp>
 #include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger/account.hpp>
 #include <nano/store/ledger/block.hpp>
@@ -3265,6 +3266,86 @@ void nano::json_handler::receivable ()
 	response_errors ();
 }
 
+void nano::json_handler::receivable_ext ()
+{
+	if (!node.store.ext.is_initialized ())
+	{
+		ec = nano::error_rpc::requires_ext_ledger;
+	}
+
+	auto account (account_impl ());
+	auto count (count_optional_impl ());
+	auto offset (offset_optional_impl (0));
+	auto threshold (threshold_optional_impl ());
+	bool const source = request.get<bool> ("source", false);
+	bool const min_version = request.get<bool> ("min_version", false);
+	bool const include_active = request.get<bool> ("include_active", false);
+	bool const include_only_confirmed = request.get<bool> ("include_only_confirmed", true);
+	auto simple (threshold.is_zero () && !source && !min_version); // if simple, response is a list of hashes
+
+	if (!ec)
+	{
+		auto transaction = node.ledger.tx_begin_read ();
+		boost::property_tree::ptree peers_l;
+
+		for (auto i = node.store.ext.account_receivables_by_amount.rupper_bound (transaction, account), n = node.store.ext.account_receivables_by_amount.rend (transaction); i != n && peers_l.size () < count; ++i)
+		{
+			nano::account_receivable_by_amount_key const & key = i->first;
+			nano::account_receivable_by_amount_info const & info = i->second;
+
+			if (key.account != account)
+			{
+				break;
+			}
+
+			if (key.amount.number () < threshold.number ())
+			{
+				break;
+			}
+
+			if (!block_confirmed (node, transaction, key.send_block_hash, include_active, include_only_confirmed))
+			{
+				continue;
+			}
+
+			if (offset > 0)
+			{
+				--offset;
+				continue;
+			}
+
+			if (simple)
+			{
+				boost::property_tree::ptree entry;
+				entry.put ("", key.send_block_hash.to_string ());
+				peers_l.push_back (std::make_pair ("", entry));
+			}
+			else if (source || min_version)
+			{
+				boost::property_tree::ptree entry;
+				entry.put ("amount", key.amount.to_string_dec ());
+				if (source)
+				{
+					entry.put ("source", info.source.to_account ());
+				}
+				if (min_version)
+				{
+					entry.put ("min_version", epoch_as_string (info.epoch));
+				}
+				peers_l.add_child (key.send_block_hash.to_string (), entry);
+			}
+			else
+			{
+				peers_l.put (key.send_block_hash.to_string (), key.amount.to_string_dec ());
+			}
+		}
+
+		response_l.add_child ("blocks", peers_l);
+	}
+
+	response_errors ();
+}
+
 void nano::json_handler::pending_exists ()
 {
 	response_l.put ("deprecated", "1");
@@ -5433,6 +5514,7 @@ ipc_json_handler_no_arg_func_map create_ipc_json_handler_no_arg_func_map ()
 	no_arg_funcs.emplace ("pending", &nano::json_handler::pending);
 	no_arg_funcs.emplace ("pending_exists", &nano::json_handler::pending_exists);
 	no_arg_funcs.emplace ("receivable", &nano::json_handler::receivable);
+	no_arg_funcs.emplace ("receivable_ext", &nano::json_handler::receivable_ext);
 	no_arg_funcs.emplace ("receivable_exists", &nano::json_handler::receivable_exists);
 	no_arg_funcs.emplace ("process", &nano::json_handler::process);
 	no_arg_funcs.emplace ("pruned_exists", &nano::json_handler::pruned_exists);

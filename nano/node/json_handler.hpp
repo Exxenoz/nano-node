@@ -95,6 +95,7 @@ public:
 	void pending ();
 	void pending_exists ();
 	void receivable ();
+	void receivable_ext ();
 	void receivable_exists ();
 	void populate_backlog ();
 	void process ();
