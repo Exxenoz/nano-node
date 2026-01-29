@@ -6,6 +6,8 @@
 #include <nano/lib/vote.hpp>
 #include <nano/secure/account_delegator_by_weight_key.hpp>
 #include <nano/secure/account_info.hpp>
+#include <nano/secure/account_receivable_by_amount_info.hpp>
+#include <nano/secure/account_receivable_by_amount_key.hpp>
 #include <nano/secure/pending_info.hpp>
 #include <nano/store/db_val.hpp>
 
@@ -64,6 +66,18 @@ inline db_val::db_val (nano::account_info const & value) :
 inline db_val::db_val (nano::account_info_v22 const & value) :
 	span_view{ reinterpret_cast<uint8_t const *> (&value), value.db_size () }
 {
+}
+
+inline db_val::db_val (nano::account_receivable_by_amount_info const & value) :
+	span_view{ reinterpret_cast<uint8_t const *> (&value), value.db_size () }
+{
+	static_assert (std::is_standard_layout<nano::account_receivable_by_amount_info>::value, "Standard layout is required");
+}
+
+inline db_val::db_val (nano::account_receivable_by_amount_key const & value) :
+	span_view{ reinterpret_cast<uint8_t const *> (&value), sizeof (value) }
+{
+	static_assert (std::is_standard_layout<nano::account_receivable_by_amount_key>::value, "Standard layout is required");
 }
 
 inline db_val::db_val (nano::pending_info const & value) :
@@ -164,6 +178,23 @@ inline db_val::operator nano::account_info_v22 () const
 {
 	nano::account_info_v22 result;
 	debug_assert (span_view.size () == result.db_size ());
+	std::copy (span_view.begin (), span_view.end (), reinterpret_cast<uint8_t *> (&result));
+	return result;
+}
+
+inline db_val::operator nano::account_receivable_by_amount_info () const
+{
+	nano::account_receivable_by_amount_info result;
+	debug_assert (span_view.size () == result.db_size ());
+	std::copy (span_view.begin (), span_view.end (), reinterpret_cast<uint8_t *> (&result));
+	return result;
+}
+
+inline db_val::operator nano::account_receivable_by_amount_key () const
+{
+	nano::account_receivable_by_amount_key result;
+	debug_assert (span_view.size () == sizeof (result));
+	static_assert (sizeof (nano::account_receivable_by_amount_key::account) + sizeof (nano::account_receivable_by_amount_key::amount) + sizeof (nano::account_receivable_by_amount_key::send_block_hash) == sizeof (result), "Packed class");
 	std::copy (span_view.begin (), span_view.end (), reinterpret_cast<uint8_t *> (&result));
 	return result;
 }

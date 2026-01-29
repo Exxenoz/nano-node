@@ -93,10 +93,22 @@ void nano::ledger::del_block (nano::store::write_transaction const & transaction
 void nano::ledger::put_receivable (nano::store::write_transaction const & transaction_a, nano::pending_key const & key_a, nano::pending_info const & info_a)
 {
 	store.pending.put (transaction_a, key_a, info_a);
+
+	if (ext.is_initialized ())
+	{
+		ext.on_put_receivable (transaction_a, key_a, info_a);
+	}
 }
 
 void nano::ledger::del_receivable (nano::store::write_transaction const & transaction_a, nano::pending_key const & key_a)
 {
+	if (ext.is_initialized ())
+	{
+		auto pending_info = store.pending.get (transaction_a, key_a);
+		release_assert (pending_info, "Receivable to be deleted was not found in the ledger");
+		ext.on_del_receivable (transaction_a, key_a, *pending_info);
+	}
+
 	store.pending.del (transaction_a, key_a);
 }
 

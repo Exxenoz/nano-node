@@ -6,6 +6,8 @@
 namespace nano
 {
 class account_delegator_by_weight_key;
+class account_receivable_by_amount_info;
+class account_receivable_by_amount_key;
 class account_info;
 class ext_ledger;
 class ledger;

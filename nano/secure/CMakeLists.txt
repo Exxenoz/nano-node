@@ -7,6 +7,10 @@ add_library(
   account_iterator.cpp
   account_iterator.hpp
   account_iterator_impl.hpp
+  account_receivable_by_amount_info.hpp
+  account_receivable_by_amount_info.cpp
+  account_receivable_by_amount_key.hpp
+  account_receivable_by_amount_key.cpp
   common.hpp
   common.cpp
   ext_ledger.hpp

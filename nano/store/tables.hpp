@@ -12,6 +12,7 @@ enum class table
 	confirmation_height,
 	default_unused, // RocksDB only
 	ext_account_delegators_by_weight,
+	ext_account_receivables_by_amount,
 	ext_receive_block_by_send_block,
 	final_votes,
 	meta,

@@ -8,6 +8,8 @@ add_library(
   backend.cpp
   ext_ledger/account_delegators_by_weight.hpp
   ext_ledger/account_delegators_by_weight.cpp
+  ext_ledger/account_receivables_by_amount.hpp
+  ext_ledger/account_receivables_by_amount.cpp
   ext_ledger/receive_block_by_send_block.hpp
   ext_ledger/receive_block_by_send_block.cpp
   ledger/account.hpp
