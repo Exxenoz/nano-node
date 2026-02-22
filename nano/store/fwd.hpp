@@ -2,11 +2,13 @@
 
 namespace nano::store
 {
+enum class ext_ledger_flags : uint64_t;
 enum class table;
 
 class backend;
 class ext_ledger_store;
 class ledger_store;
+class meta_view;
 class read_transaction;
 class transaction;
 class write_transaction;

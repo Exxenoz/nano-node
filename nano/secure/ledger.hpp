@@ -140,9 +140,11 @@ private:
 
 	std::unique_ptr<ledger_set_any> any_impl;
 	std::unique_ptr<ledger_set_cemented> cemented_impl;
+	std::unique_ptr<nano::ext_ledger> ext_impl;
 
 public:
 	ledger_set_any & any;
 	ledger_set_cemented & cemented;
+	nano::ext_ledger & ext;
 };
 }

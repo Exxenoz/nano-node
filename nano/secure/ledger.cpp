@@ -10,12 +10,14 @@
 #include <nano/lib/work.hpp>
 #include <nano/node/make_store.hpp>
 #include <nano/secure/common.hpp>
+#include <nano/secure/ext_ledger.hpp>
 #include <nano/secure/ledger.hpp>
 #include <nano/secure/ledger_processor.hpp>
 #include <nano/secure/ledger_rollback.hpp>
 #include <nano/secure/ledger_set_any.hpp>
 #include <nano/secure/ledger_set_cemented.hpp>
 #include <nano/secure/rep_weights.hpp>
+#include <nano/store/ext_ledger_store.hpp>
 #include <nano/store/ledger/account.hpp>
 #include <nano/store/ledger/block.hpp>
 #include <nano/store/ledger/confirmation_height.hpp>
@@ -41,8 +43,10 @@ nano::ledger::ledger (nano::store::ledger_store & store_a, nano::network_params 
 	max_backlog_size{ max_backlog_a },
 	any_impl{ std::make_unique<ledger_set_any> (*this) },
 	cemented_impl{ std::make_unique<ledger_set_cemented> (*this) },
+	ext_impl{ std::make_unique<nano::ext_ledger> (*this, stats_a, logger_a) },
 	any{ *any_impl },
-	cemented{ *cemented_impl }
+	cemented{ *cemented_impl },
+	ext{ *ext_impl }
 {
 	initialize (generate_cache_flags_a);
 }
@@ -284,6 +288,11 @@ void nano::ledger::initialize (nano::generate_cache_flags const & generate_cache
 	logger.info (nano::log::type::ledger, "Weight committed: {} | unused: {}",
 	nano::uint128_union{ rep_weights.get_weight_committed () }.format_balance (nano::nano_ratio, 0, true),
 	nano::uint128_union{ rep_weights.get_weight_unused () }.format_balance (nano::nano_ratio, 0, true));
+
+	if (store.ext.is_initialized ())
+	{
+		ext.initialize ();
+	}
 }
 
 void nano::ledger::verify_consistency (secure::transaction const & transaction) const

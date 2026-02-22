@@ -11,24 +11,24 @@
 
 namespace nano::store
 {
-enum class ext_ledger_store_flags : uint64_t
+enum class ext_ledger_flags : uint64_t
 {
 	none = 0,
 };
 
-inline nano::store::ext_ledger_store_flags operator| (nano::store::ext_ledger_store_flags a, nano::store::ext_ledger_store_flags b)
+inline nano::store::ext_ledger_flags operator| (nano::store::ext_ledger_flags a, nano::store::ext_ledger_flags b)
 {
-	return static_cast<nano::store::ext_ledger_store_flags> (static_cast<uint64_t> (a) | static_cast<uint64_t> (b));
+	return static_cast<nano::store::ext_ledger_flags> (static_cast<uint64_t> (a) | static_cast<uint64_t> (b));
 }
-inline nano::store::ext_ledger_store_flags operator& (nano::store::ext_ledger_store_flags a, nano::store::ext_ledger_store_flags b)
+inline nano::store::ext_ledger_flags operator& (nano::store::ext_ledger_flags a, nano::store::ext_ledger_flags b)
 {
-	return static_cast<nano::store::ext_ledger_store_flags> (static_cast<uint64_t> (a) & static_cast<uint64_t> (b));
+	return static_cast<nano::store::ext_ledger_flags> (static_cast<uint64_t> (a) & static_cast<uint64_t> (b));
 }
 
 class ext_ledger_store
 {
 public:
-	explicit ext_ledger_store (nano::store::ledger_store &, nano::store::backend &, nano::stats &, nano::logger &);
+	explicit ext_ledger_store (nano::store::backend &, nano::stats &, nano::logger &);
 	~ext_ledger_store ();
 
 	nano::store::write_transaction tx_begin_write ();
@@ -36,18 +36,26 @@ public:
 
 	bool is_initialized () const;
 	void initialize (nano::store::backend_meta const &, nano::store::open_mode, bool backup_before_upgrade = false);
-	void initialize_extended_data (nano::store::ext_ledger_store_flags flags);
 	void perform_upgrades (nano::store::backend_meta const &, bool backup_before_upgrade);
 
 	uint64_t count (nano::store::transaction const &, table) const;
 	bool empty (nano::store::transaction const &) const;
 
+	nano::store::ext_ledger_flags get_flags (nano::store::transaction const &) const;
+	bool has_flags (nano::store::transaction const &, nano::store::ext_ledger_flags) const;
+	void add_flags (nano::store::write_transaction const &, nano::store::ext_ledger_flags);
+
 private:
-	nano::store::ledger_store & ledger;
 	nano::store::backend & backend;
 	nano::stats & stats;
 	nano::logger & logger;
 	bool initialized{ false };
+
+private:
+	std::unique_ptr<nano::store::meta_view> meta_impl;
+
+public:
+	nano::store::meta_view & meta;
 
 public:
 	static nano::store::version_value_t constexpr version_minimum{ 1 };

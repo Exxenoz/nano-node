@@ -100,10 +100,6 @@ void backend::load_meta ()
 	backend_meta info{};
 	info.ledger_version = get_version (txn, nano::store::version_key::ledger);
 	info.ext_ledger_version = get_version (txn, nano::store::version_key::ext_ledger);
-	if (auto ext_ledger_flags = get_meta_value (txn, nano::store::meta_key::ext_ledger_flags))
-	{
-		info.ext_ledger_flags = *ext_ledger_flags;
-	}
 	current_meta = info;
 }
 

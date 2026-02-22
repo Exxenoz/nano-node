@@ -6,6 +6,7 @@
 namespace nano
 {
 class account_info;
+class ext_ledger;
 class ledger;
 class ledger_cache;
 class ledger_constants;

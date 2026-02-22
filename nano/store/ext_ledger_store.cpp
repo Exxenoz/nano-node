@@ -13,11 +13,12 @@ nano::store::column_schema const ext_ledger_store::schema_current{
 
 namespace nano::store
 {
-ext_ledger_store::ext_ledger_store (nano::store::ledger_store & ledger_a, nano::store::backend & backend_a, nano::stats & stats_a, nano::logger & logger_a) :
-	ledger{ ledger_a },
+ext_ledger_store::ext_ledger_store (nano::store::backend & backend_a, nano::stats & stats_a, nano::logger & logger_a) :
 	backend{ backend_a },
 	stats{ stats_a },
-	logger{ logger_a }
+	logger{ logger_a },
+	meta_impl{ std::make_unique<nano::store::meta_view> (backend_a) },
+	meta{ *meta_impl }
 {
 }
 
@@ -101,13 +102,7 @@ void ext_ledger_store::initialize (nano::store::backend_meta const & meta, nano:
 	merged_schema.insert (nano::store::ext_ledger_store::schema_current.begin (), nano::store::ext_ledger_store::schema_current.end ());
 	backend.open (merged_schema, mode);
 
-	initialize_extended_data (static_cast<nano::store::ext_ledger_store_flags> (meta.ext_ledger_flags));
-
 	initialized = true;
-}
-
-void ext_ledger_store::initialize_extended_data (nano::store::ext_ledger_store_flags flags)
-{
 }
 
 void ext_ledger_store::perform_upgrades (nano::store::backend_meta const & meta, bool backup_before_upgrade)
@@ -149,6 +144,27 @@ bool ext_ledger_store::empty (nano::store::transaction const & txn) const
 		debug_assert (backend.count (txn, table) == 0);
 	}
 	return true;
+}
+
+nano::store::ext_ledger_flags ext_ledger_store::get_flags (nano::store::transaction const & txn) const
+{
+	nano::store::ext_ledger_flags ext_ledger_flags = nano::store::ext_ledger_flags::none;
+	if (auto ext_ledger_flags_opt = meta.get (txn, nano::store::meta_key::ext_ledger_flags))
+	{
+		ext_ledger_flags = static_cast<nano::store::ext_ledger_flags> (*ext_ledger_flags_opt);
+	}
+	return ext_ledger_flags;
+}
+
+bool ext_ledger_store::has_flags (nano::store::transaction const & txn, nano::store::ext_ledger_flags flags) const
+{
+	return (get_flags (txn) & flags) == flags;
+}
+
+void ext_ledger_store::add_flags (nano::store::write_transaction const & txn, nano::store::ext_ledger_flags flags)
+{
+	nano::store::ext_ledger_flags ext_ledger_flags = get_flags (txn) | flags;
+	meta.put (txn, nano::store::meta_key::ext_ledger_flags, static_cast<nano::store::meta_value_t> (ext_ledger_flags));
 }
 
 nano::store::write_transaction ext_ledger_store::tx_begin_write ()

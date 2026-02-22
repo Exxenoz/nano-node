@@ -43,7 +43,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	stats{ stats_a },
 	logger{ logger_a },
 	backend_impl{ std::move (backend_a) },
-	ext_impl{ std::make_unique<nano::store::ext_ledger_store> (*this, *backend_impl, stats_a, logger_a) },
+	ext_impl{ std::make_unique<nano::store::ext_ledger_store> (*backend_impl, stats_a, logger_a) },
 	successor_impl{ std::make_unique<nano::store::ledger::successor_view> (*backend_impl) },
 	block_impl{ std::make_unique<nano::store::ledger::block_view> (*backend_impl, *successor_impl) },
 	account_impl{ std::make_unique<nano::store::ledger::account_view> (*backend_impl) },
