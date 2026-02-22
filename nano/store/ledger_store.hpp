@@ -36,8 +36,8 @@ public:
 	std::filesystem::path get_database_path () const;
 	nano::store::open_mode get_mode () const;
 
-	nano::store::backend_version_t get_version (nano::store::transaction const &) const;
-	void set_version (nano::store::write_transaction const &, nano::store::backend_version_t version);
+	nano::store::version_value_t get_version (nano::store::transaction const &) const;
+	void set_version (nano::store::write_transaction const &, nano::store::version_value_t version);
 
 public: // Upgrades
 	void upgrade_v21_to_v22 ();
@@ -79,8 +79,8 @@ public:
 	nano::store::ledger::final_vote_view & final_vote;
 
 public:
-	static nano::store::backend_version_t constexpr version_minimum{ 21 };
-	static nano::store::backend_version_t constexpr version_current{ 25 };
+	static nano::store::version_value_t constexpr version_minimum{ 21 };
+	static nano::store::version_value_t constexpr version_current{ 25 };
 
 public:
 	static nano::store::column_schema const schema_current;

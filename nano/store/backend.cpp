@@ -37,7 +37,7 @@ void backend::open (column_schema schema, nano::store::open_mode mode)
 	debug_assert (current_meta.has_value ());
 }
 
-void backend::create (column_schema schema, nano::store::backend_version_t version)
+void backend::create (column_schema schema, nano::store::version_value_t version, nano::store::version_key version_key)
 {
 	if (is_open)
 	{
@@ -48,13 +48,13 @@ void backend::create (column_schema schema, nano::store::backend_version_t versi
 	open (schema, nano::store::open_mode::read_write);
 
 	// Ensure database doesn't already exist
-	if (meta.version_exists (tx_begin_read ()))
+	if (exists_version (tx_begin_read (), version_key))
 	{
 		throw std::runtime_error ("Attempting to create a database that already exists: " + get_database_path ());
 	}
 
 	// Set the version in the meta table
-	meta.put_version (tx_begin_write (), version);
+	set_version (tx_begin_write (), version_key, version);
 
 	close ();
 }
@@ -97,7 +97,7 @@ auto backend::fetch_meta () -> std::optional<backend_meta>
 void backend::load_meta ()
 {
 	backend_meta info{};
-	info.version = meta.get_version (tx_begin_read ());
+	info.ledger_version = get_version (tx_begin_read (), nano::store::version_key::ledger);
 	current_meta = info;
 }
 
@@ -118,14 +118,34 @@ auto backend::get_mode () const -> std::optional<nano::store::open_mode>
 	return is_open ? std::optional{ current_mode } : std::nullopt;
 }
 
-auto backend::get_version (nano::store::transaction const & txn) const -> nano::store::backend_version_t
+auto backend::get_meta_value (nano::store::transaction const & txn, nano::store::meta_key meta_key) const -> std::optional<nano::store::meta_value_t>
 {
-	return meta.get_version (txn);
+	return meta.get (txn, meta_key);
 }
 
-void backend::set_version (nano::store::write_transaction const & txn, nano::store::backend_version_t version)
+void backend::set_meta_value (nano::store::write_transaction const & txn, nano::store::meta_key meta_key, nano::store::meta_value_t meta_value)
 {
-	meta.put_version (txn, version);
+	meta.put (txn, meta_key, meta_value);
+}
+
+bool backend::exists_meta_value (nano::store::transaction const & txn, nano::store::meta_key meta_key) const
+{
+	return meta.exists (txn, meta_key);
+}
+
+nano::store::version_value_t backend::get_version (nano::store::transaction const & txn, nano::store::version_key version_key) const
+{
+	return version.get (txn, version_key);
+}
+
+void backend::set_version (nano::store::write_transaction const & txn, nano::store::version_key version_key, nano::store::version_value_t version)
+{
+	this->version.put (txn, version_key, version);
+}
+
+bool backend::exists_version (nano::store::transaction const & txn, nano::store::version_key version_key) const
+{
+	return version.exists (txn, version_key);
 }
 
 bool backend::empty (nano::store::transaction const & txn, nano::store::table table) const

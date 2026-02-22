@@ -80,30 +80,30 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 	{
 		meta = *meta_opt;
 
-		logger.debug (nano::log::type::ledger_store, "Ledger database version: {}", meta.version);
+		logger.debug (nano::log::type::ledger_store, "Ledger database version: {}", meta.ledger_version);
 
 		// Prevent opening future database versions
-		if (meta.version > version_current)
+		if (meta.ledger_version > version_current)
 		{
-			logger.error (nano::log::type::ledger_store, "The version of the ledger database ({}) is higher than the current ({}) which is supported. Either upgrade your node software or use a different database.", meta.version, version_current);
+			logger.error (nano::log::type::ledger_store, "The version of the ledger database ({}) is higher than the current ({}) which is supported. Either upgrade your node software or use a different database.", meta.ledger_version, version_current);
 
-			throw std::runtime_error ("Ledger version " + std::to_string (meta.version) + " is higher than current version " + std::to_string (version_current));
+			throw std::runtime_error ("Ledger version " + std::to_string (meta.ledger_version) + " is higher than current version " + std::to_string (version_current));
 		}
 
 		// Minimum supported upgrade version check
-		if (meta.version < version_minimum)
+		if (meta.ledger_version < version_minimum)
 		{
-			logger.error (nano::log::type::ledger_store, "The version of the ledger database ({}) is lower than the minimum ({}) which is supported for upgrades. Perform an intermediate upgrade with an older node version or perform a fresh bootstrap.", meta.version, version_minimum);
+			logger.error (nano::log::type::ledger_store, "The version of the ledger database ({}) is lower than the minimum ({}) which is supported for upgrades. Perform an intermediate upgrade with an older node version or perform a fresh bootstrap.", meta.ledger_version, version_minimum);
 
-			throw std::runtime_error ("Ledger version " + std::to_string (meta.version) + " is lower than minimum supported version " + std::to_string (version_minimum));
+			throw std::runtime_error ("Ledger version " + std::to_string (meta.ledger_version) + " is lower than minimum supported version " + std::to_string (version_minimum));
 		}
 
 		// Check if upgrade is needed
-		if (meta.version < version_current)
+		if (meta.ledger_version < version_current)
 		{
 			needs_upgrade = true;
 
-			logger.info (nano::log::type::ledger_store, "The ledger database needs to be upgraded from version {} to {}", meta.version, version_current);
+			logger.info (nano::log::type::ledger_store, "The ledger database needs to be upgraded from version {} to {}", meta.ledger_version, version_current);
 		}
 	}
 	else
@@ -112,7 +112,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 
 		logger.info (nano::log::type::ledger_store, "No existing ledger found, a new database will be created.");
 	}
-	release_assert (meta.version > 0 || fresh_db);
+	release_assert (meta.ledger_version > 0 || fresh_db);
 
 	if (needs_upgrade || fresh_db)
 	{
@@ -148,7 +148,7 @@ ledger_store::ledger_store (std::unique_ptr<nano::store::backend> backend_a, nan
 
 	backend.open (schema_current, mode);
 
-	release_assert (backend.get_meta ().version == version_current, "ledger database version after initialization is not current");
+	release_assert (backend.get_meta ().ledger_version == version_current, "ledger database version after initialization is not current");
 }
 
 ledger_store::~ledger_store () = default;
@@ -184,10 +184,10 @@ bool ledger_store::empty (nano::store::transaction const & txn) const
 
 void ledger_store::perform_upgrades (nano::store::backend_meta meta)
 {
-	debug_assert (meta.version < version_current, "perform_upgrades called but no upgrade is necessary");
-	release_assert (meta.version >= version_minimum, "perform_upgrades called but version is below minimum supported version", std::to_string (meta.version));
+	debug_assert (meta.ledger_version < version_current, "perform_upgrades called but no upgrade is necessary");
+	release_assert (meta.ledger_version >= version_minimum, "perform_upgrades called but version is below minimum supported version", std::to_string (meta.ledger_version));
 
-	switch (meta.version)
+	switch (meta.ledger_version)
 	{
 		case 21:
 			upgrade_v21_to_v22 ();
@@ -204,7 +204,7 @@ void ledger_store::perform_upgrades (nano::store::backend_meta meta)
 		case 25:
 			break;
 		default:
-			release_assert (false, "invalid ledger database version for upgrade", std::to_string (meta.version));
+			release_assert (false, "invalid ledger database version for upgrade", std::to_string (meta.ledger_version));
 	}
 }
 
@@ -273,12 +273,12 @@ void ledger_store::upgrade_v21_to_v22 ()
 
 	backend.open (schema_v21, nano::store::open_mode::read_write);
 	{
-		release_assert (backend.get_version (backend.tx_begin_read ()) == 21, "unexpected version during upgrade", std::to_string (backend.get_version (backend.tx_begin_read ())));
+		release_assert (get_version (backend.tx_begin_read ()) == 21, "unexpected version during upgrade", std::to_string (get_version (backend.tx_begin_read ())));
 
 		backend.drop_table ("unchecked");
 
 		auto transaction = backend.tx_begin_write ();
-		backend.set_version (transaction, 22);
+		set_version (transaction, 22);
 	}
 	backend.close ();
 
@@ -294,7 +294,7 @@ void ledger_store::upgrade_v22_to_v23 ()
 	// This allows us to drop it if a previous upgrade attempt failed halfway
 	backend.open (schema_v23, nano::store::open_mode::read_write);
 	{
-		release_assert (backend.get_version (backend.tx_begin_read ()) == 22, "unexpected version during upgrade", std::to_string (backend.get_version (backend.tx_begin_read ())));
+		release_assert (get_version (backend.tx_begin_read ()) == 22, "unexpected version during upgrade", std::to_string (get_version (backend.tx_begin_read ())));
 
 		// Always drop rep_weights table to ensure it's empty before populating
 		// This can happen if an upgrade was attempted but failed halfway through
@@ -349,7 +349,7 @@ void ledger_store::upgrade_v22_to_v23 ()
 		});
 
 		logger.info (nano::log::type::ledger_upgrade, "Done processing {} accounts", processed);
-		backend.set_version (transaction, 23);
+		set_version (transaction, 23);
 	}
 	backend.close ();
 
@@ -363,12 +363,12 @@ void ledger_store::upgrade_v23_to_v24 ()
 
 	backend.open (schema_v23, nano::store::open_mode::read_write);
 	{
-		release_assert (backend.get_version (backend.tx_begin_read ()) == 23, "unexpected version during upgrade", std::to_string (backend.get_version (backend.tx_begin_read ())));
+		release_assert (get_version (backend.tx_begin_read ()) == 23, "unexpected version during upgrade", std::to_string (get_version (backend.tx_begin_read ())));
 
 		backend.drop_table ("frontiers");
 
 		auto transaction = backend.tx_begin_write ();
-		backend.set_version (transaction, 24);
+		set_version (transaction, 24);
 	}
 	backend.close ();
 
@@ -383,7 +383,7 @@ void ledger_store::upgrade_v24_to_v25 ()
 	// Open with schema_current so we have access to the successor table
 	backend.open (schema_current, nano::store::open_mode::read_write);
 	{
-		release_assert (backend.get_version (backend.tx_begin_read ()) == 24, "unexpected version during upgrade", std::to_string (backend.get_version (backend.tx_begin_read ())));
+		release_assert (get_version (backend.tx_begin_read ()) == 24, "unexpected version during upgrade", std::to_string (get_version (backend.tx_begin_read ())));
 
 		// Always clear successor table to ensure clean state before populating
 		auto clear_result = backend.clear (nano::store::table::successor);
@@ -426,7 +426,7 @@ void ledger_store::upgrade_v24_to_v25 ()
 		});
 
 		logger.info (nano::log::type::ledger_upgrade, "Done processing {} blocks", processed);
-		version.put (transaction, 25);
+		set_version (transaction, 25);
 	}
 	backend.close ();
 
@@ -454,14 +454,14 @@ uint64_t ledger_store::count (nano::store::transaction const & txn, nano::store:
 	return backend.count (txn, table);
 }
 
-auto ledger_store::get_version (nano::store::transaction const & txn) const -> nano::store::backend_version_t
+auto ledger_store::get_version (nano::store::transaction const & txn) const -> nano::store::version_value_t
 {
-	return backend.get_version (txn);
+	return backend.get_version (txn, nano::store::version_key::ledger);
 }
 
-void ledger_store::set_version (nano::store::write_transaction const & txn, nano::store::backend_version_t version)
+void ledger_store::set_version (nano::store::write_transaction const & txn, nano::store::version_value_t version)
 {
-	backend.set_version (txn, version);
+	backend.set_version (txn, nano::store::version_key::ledger, version);
 }
 
 nano::store::write_transaction ledger_store::tx_begin_write ()

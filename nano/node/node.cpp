@@ -874,7 +874,7 @@ std::shared_ptr<nano::node> nano::node::shared ()
 int nano::node::store_version ()
 {
 	auto transaction (store.tx_begin_read ());
-	return store.get_version (transaction);
+	return static_cast<int> (store.get_version (transaction));
 }
 
 nano::bootstrap_weights nano::node::get_bootstrap_weights () const

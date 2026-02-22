@@ -288,7 +288,7 @@ TEST (ledger_upgrades, upgrade_v21_to_v22)
 		auto backend = nano::test::make_backend (path);
 		backend->open (schema_v22, nano::store::open_mode::read_only);
 		auto tx = backend->tx_begin_read ();
-		ASSERT_EQ (backend->get_version (tx), 22);
+		ASSERT_EQ (backend->get_version (tx, nano::store::version_key::ledger), 22);
 		ASSERT_FALSE (backend->table_exists ("unchecked"));
 	}
 }
@@ -502,7 +502,7 @@ TEST (ledger_upgrades, upgrade_v22_to_v23_stale_rep_weights)
 			backend->put (tx, nano::store::table::rep_weights, rep_stale, nano::amount{ 12345 }); // Stale entry
 
 			// Version is still 22 (upgrade didn't complete)
-			ASSERT_EQ (backend->get_version (tx), 22);
+			ASSERT_EQ (backend->get_version (tx, nano::store::version_key::ledger), 22);
 		}
 		backend->close ();
 	}
@@ -594,7 +594,7 @@ TEST (ledger_upgrades, upgrade_v23_to_v24)
 		auto backend = nano::test::make_backend (path);
 		backend->open (schema_v24, nano::store::open_mode::read_only);
 		auto tx = backend->tx_begin_read ();
-		ASSERT_EQ (backend->get_version (tx), 24);
+		ASSERT_EQ (backend->get_version (tx, nano::store::version_key::ledger), 24);
 		ASSERT_FALSE (backend->table_exists ("frontiers"));
 	}
 }

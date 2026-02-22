@@ -10,6 +10,7 @@
 #include <nano/store/tables.hpp>
 #include <nano/store/transaction.hpp>
 #include <nano/store/txn_tracking.hpp>
+#include <nano/store/version.hpp>
 
 #include <boost/property_tree/ptree_fwd.hpp>
 
@@ -34,11 +35,9 @@ REGISTER_ERROR_CODES (nano, error_backend)
 
 namespace nano::store
 {
-using backend_version_t = uint64_t;
-
 struct backend_meta
 {
-	backend_version_t version;
+	nano::store::version_value_t ledger_version;
 };
 
 using column_definition = std::pair<nano::store::table, std::string>;
@@ -70,7 +69,7 @@ public:
 	std::optional<backend_meta> fetch_meta ();
 
 	void open (column_schema, nano::store::open_mode mode);
-	void create (column_schema, nano::store::backend_version_t version);
+	void create (column_schema, nano::store::version_value_t version, nano::store::version_key version_key = nano::store::version_key::ledger);
 	void close ();
 
 	// Basic CRUD operations
@@ -129,8 +128,13 @@ public:
 	column_schema get_schema () const;
 	backend_meta get_meta () const;
 
-	nano::store::backend_version_t get_version (nano::store::transaction const &) const;
-	void set_version (nano::store::write_transaction const &, nano::store::backend_version_t version);
+	std::optional<nano::store::meta_value_t> get_meta_value (nano::store::transaction const &, nano::store::meta_key meta_key) const;
+	void set_meta_value (nano::store::write_transaction const &, nano::store::meta_key meta_key, nano::store::meta_value_t meta_value);
+	bool exists_meta_value (nano::store::transaction const & txn, nano::store::meta_key meta_key) const;
+
+	nano::store::version_value_t get_version (nano::store::transaction const &, nano::store::version_key version_key) const;
+	void set_version (nano::store::write_transaction const &, nano::store::version_key version_key, nano::store::version_value_t version);
+	bool exists_version (nano::store::transaction const & txn, nano::store::version_key version_key) const;
 
 protected:
 	virtual void open_impl (column_schema, nano::store::open_mode) = 0;
@@ -150,6 +154,7 @@ private:
 	column_schema current_schema{};
 
 	nano::store::meta_view meta{ *this };
+	nano::store::version_view version{ *this };
 
 public:
 	static nano::store::column_schema const schema_meta;

@@ -2,21 +2,27 @@
 
 #include <nano/store/fwd.hpp>
 
+#include <optional>
+
 namespace nano::store
 {
+enum class meta_key : uint64_t
+{
+	ledger_version = 1,
+};
+
+using meta_value_t = uint64_t;
+
 class meta_view
 {
 public:
 	explicit meta_view (nano::store::backend &);
 
-	void put_version (nano::store::write_transaction const &, uint64_t version);
-	uint64_t get_version (nano::store::transaction const &) const;
-	bool version_exists (nano::store::transaction const &) const;
+	void put (nano::store::write_transaction const &, nano::store::meta_key meta_key, nano::store::meta_value_t meta_value);
+	std::optional<nano::store::meta_value_t> get (nano::store::transaction const &, nano::store::meta_key meta_key) const;
+	bool exists (nano::store::transaction const &, nano::store::meta_key meta_key) const;
 
 private:
 	nano::store::backend & backend;
-
-private:
-	static uint64_t constexpr version_key{ 1 };
 };
 }

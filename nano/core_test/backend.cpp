@@ -1265,12 +1265,12 @@ TEST (backend, set_get_version)
 
 	{
 		auto write_tx = backend->tx_begin_write ();
-		backend->set_version (write_tx, 42);
+		backend->set_version (write_tx, nano::store::version_key::ledger, 42);
 		write_tx.commit ();
 	}
 
 	auto read_tx = backend->tx_begin_read ();
-	EXPECT_EQ (backend->get_version (read_tx), 42);
+	EXPECT_EQ (backend->get_version (read_tx, nano::store::version_key::ledger), 42);
 }
 
 /*

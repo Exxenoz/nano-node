@@ -67,6 +67,8 @@ add_library(
   iterator.cpp
   reverse_iterator.hpp
   reverse_iterator_templ.hpp
+  version.hpp
+  version.cpp
   versioning.hpp
   versioning.cpp
   write_queue.hpp
